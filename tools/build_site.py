@@ -16,7 +16,7 @@ import argparse, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PAGES = [
-    ('pimpinan', 'pimpinan', 'Pimpinan'),
+    ('pimpinan', 'pimpinan', 'Omzet vs Pemakaian Bahan'),
     ('cpu', 'produksi-cpu', 'Produksi CPU'),
     ('pembelian', 'pembelian', 'Pembelian'),
     ('gaji', 'gaji-harian', 'Gaji Harian'),
@@ -59,6 +59,9 @@ def patch(html, slug):
     if j < 0:
         sys.exit(f'{slug}: tag <body> tidak ditemukan')
     html = html[:j + 6] + nav(slug) + html[j + 6:]
+    if slug == 'pimpinan':  # nama tampilan halaman ini di situs
+        html = html.replace('<title>Dashboard Pimpinan ISA</title>', '<title>Omzet vs Pemakaian Bahan · ISA</title>', 1)
+        html = html.replace('<h1>Dashboard Pimpinan</h1>', '<h1>Omzet vs Pemakaian Bahan</h1>', 1)
     if slug == 'pembelian':
         old = "const dl=await getDl();const btn=document.getElementById('itCsv');if(!dl){btn.hidden=true;return}"
         new = ("const dl=await getDl();const btn=document.getElementById('itCsv');"

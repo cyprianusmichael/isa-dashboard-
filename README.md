@@ -5,7 +5,7 @@ Situs GitHub Pages yang menggabungkan dashboard PT. Inti Selera Asia dalam satu 
 | Halaman | Folder | Sumber (artifact claude.ai) |
 |---|---|---|
 | Menu | `index.html` | – |
-| Dashboard Pimpinan | `pimpinan/` | https://claude.ai/artifact/4jTCwC5zA6pjcxgkeKES1K |
+| Omzet vs Pemakaian Bahan | `pimpinan/` | https://claude.ai/artifact/4jTCwC5zA6pjcxgkeKES1K |
 | Produksi CPU | `produksi-cpu/` | https://claude.ai/artifact/53KNxmb2Cf75vbjb8rQZZM |
 | Pembelian | `pembelian/` | https://claude.ai/artifact/CoXN6FbQReHPH17x6A55gF |
 | Gaji Harian | `gaji-harian/` | https://claude.ai/artifact/FwqpoE8LSkw8bjQjumMtbk |
