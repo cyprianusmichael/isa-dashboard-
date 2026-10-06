@@ -1,0 +1,534 @@
+<!doctype html><html><head><meta name="robots" content="noindex,nofollow"><style id="isa-nav-css">
+.isa-nav{--n-bg:#1b2130;--n-ink:#e7eaf0;--n-mute:#9aa3b5;--n-on:#ffffff;--n-pill:#2c3445;
+  background:var(--n-bg);color:var(--n-ink);font:600 13px/1.3 "Figtree","Segoe UI",system-ui,sans-serif;
+  padding:8px 16px;padding-top:calc(8px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.isa-nav a{color:var(--n-mute);text-decoration:none;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.isa-nav a:hover{color:var(--n-on);background:var(--n-pill)}
+.isa-nav a:focus-visible{outline:2px solid var(--n-on);outline-offset:2px}
+.isa-nav a[aria-current="page"]{color:var(--n-on);background:var(--n-pill)}
+.isa-nav .home{color:var(--n-on);padding-left:0;font-weight:700;letter-spacing:.02em}
+.isa-nav .home:hover{background:none;text-decoration:underline;text-underline-offset:3px}
+.isa-nav .links{display:flex;flex-wrap:wrap;gap:4px}
+@media (max-width:600px){.isa-nav{font-size:12px}.isa-nav a{padding:4px 8px}}
+</style><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><nav class="isa-nav" aria-label="Dashboard ISA"><a class="home" href="../">← Dashboard ISA</a><span class="links"><a href="../pimpinan/" aria-current="page">Pimpinan</a><a href="../produksi-cpu/">Produksi CPU</a><a href="../pembelian/">Pembelian</a><a href="../gaji-harian/">Gaji Harian</a><a href="https://script.google.com/macros/s/AKfycbxP97nMJzQncOaqQW48dLaUP78PRFDgGwmjU3X4b8qvZI9eTSqAyTmK7IWO8bn-7zKQ/exec" target="_blank" rel="noopener">Absensi ↗</a></span></nav>
+<title>Dashboard Pimpinan ISA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky filter bar, summary tiles, brand strip, then heatmaps (outlet x bulan), daily chart and outlet detail */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#1b2130; --muted:#5d6678; --line:#dfe3ea; --soft:#eef1f5;
+  --accent:#2f4b8f; --yr-a:#aab2c3; --yr-b:#7189c9;
+  --bentoya:#c0392b; --katsuq:#d4870f; --marusan:#1f7a74;
+  --good:#1e8a4c; --good-bg:#dff3e7; --warn:#b7791f; --warn-bg:#fbefd7; --bad:#c53030; --bad-bg:#fbe1e1;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-data:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --surface:#1a1f29; --ink:#e7eaf0; --muted:#9aa3b5; --line:#2c3342; --soft:#222835;
+  --accent:#8ea8ec; --yr-a:#586173; --yr-b:#5f77b8; --bentoya:#ec6d5e; --katsuq:#f0ad3c; --marusan:#4fc1b8;
+  --good:#5cd08f; --good-bg:#17382a; --warn:#f0b957; --warn-bg:#3d3018; --bad:#f07878; --bad-bg:#40202a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --surface:#1a1f29; --ink:#e7eaf0; --muted:#9aa3b5; --line:#2c3342; --soft:#222835;
+  --accent:#8ea8ec; --yr-a:#586173; --yr-b:#5f77b8; --bentoya:#ec6d5e; --katsuq:#f0ad3c; --marusan:#4fc1b8;
+  --good:#5cd08f; --good-bg:#17382a; --warn:#f0b957; --warn-bg:#3d3018; --bad:#f07878; --bad-bg:#40202a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+h1{font-size:1.9rem;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.2rem;font-weight:700}
+h3{font-size:1rem;font-weight:600}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+header.top{padding-block:28px 12px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.months{display:flex;flex-wrap:wrap;gap:4px}
+.months button{font:600 .82rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+.months button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.months button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tag{display:inline-block;font:600 .72rem var(--f-body);padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.months button.q{background:transparent;border-style:dashed;color:var(--muted)}
+.dd{position:relative}
+.dd summary{list-style:none;cursor:pointer;font:600 .82rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 28px 6px 10px;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative}
+.dd summary::-webkit-details-marker{display:none}
+.dd summary::after{content:"";position:absolute;right:10px;top:50%;width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
+.dd[open] summary{border-color:var(--accent)}
+.dd summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dd .panel{position:absolute;z-index:20;top:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:250px;box-shadow:0 8px 24px rgb(0 0 0 / .14);display:grid;gap:10px}
+.ck{display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer}
+.ck input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.ck.all{font-weight:600;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.ck.bh{font-weight:600}
+.ck.bh b{display:inline-block;width:10px;height:10px;border-radius:2px}
+.grp .ol{display:flex;flex-wrap:wrap;gap:6px 14px;padding:6px 0 0 24px}
+.grp .ol .ck{font-family:var(--f-data);font-size:.82rem}
+.panel .hint{font-size:.75rem;color:var(--muted)}
+@media (max-width:600px){.dd{position:static}.dd .panel{left:16px;right:16px;min-width:0}}
+.refresh{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.refresh button{font:600 .82rem var(--f-body);border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:6px;padding:6px 12px;cursor:pointer}
+.refresh button:hover:not(:disabled){background:var(--accent);color:var(--surface)}
+.refresh button:disabled{opacity:.55;cursor:default}
+.refresh button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.refresh .msg{font-size:.78rem;color:var(--muted);max-width:40ch}
+.refresh .msg.err{color:var(--bad)}
+.years{display:flex;gap:4px;padding-right:8px;margin-right:4px;border-right:1px solid var(--line)}
+.years button{font:700 .82rem var(--f-data);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+.years button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.years button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.delta{font:600 .78rem var(--f-data)}
+.up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--muted)}
+section{margin-top:28px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .big{font:700 1.7rem var(--f-display);letter-spacing:-.01em}
+.tile .sub{font-size:.85rem;color:var(--muted)}
+.pill{display:inline-block;font:600 .75rem var(--f-data);padding:2px 8px;border-radius:999px}
+.p-good{background:var(--good-bg);color:var(--good)} .p-warn{background:var(--warn-bg);color:var(--warn)} .p-bad{background:var(--bad-bg);color:var(--bad)}
+.brands{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.brand{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;border-top:4px solid var(--c)}
+.brand .row{display:flex;justify-content:space-between;gap:8px;font-size:.88rem}
+.meter{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--c)}
+.outlets{display:flex;flex-wrap:wrap;gap:6px}
+.outlets span{font:600 .75rem var(--f-data);padding:3px 8px;border-radius:6px;background:var(--soft)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.b{font-weight:600}
+tr.brandrow td{background:var(--soft);font-weight:600}
+.hm td.c{font-family:var(--f-data);font-variant-numeric:tabular-nums;text-align:center;min-width:58px}
+.hm td.c.na{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.chartbox{position:relative;height:300px}
+.hbar{display:grid;grid-template-columns:minmax(0,1.3fr) 2fr auto;gap:6px 10px;align-items:center;font-size:.85rem}
+.hbar .t{height:10px;background:var(--soft);border-radius:4px;overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--accent)}
+.hbar .n{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:.8rem;color:var(--muted);text-align:right}
+.hbar .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+select{font:500 .9rem var(--f-body);padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;color:var(--muted)}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.notes{font-size:.86rem;color:var(--muted);display:grid;gap:6px;max-width:75ch}
+.notes li{margin-left:1em}
+@media (prefers-reduced-motion:no-preference){.meter i,.hbar .t i{transition:width .4s ease}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <div class="eyebrow">PT. Inti Selera Asia · IntiSelera Group</div>
+    <h1>Dashboard Pimpinan</h1>
+    <div class="muted" style="font-size:.9rem">Omzet vs target dan pemakaian bahan (resep &amp; non-resep) per outlet · <span id="rangeLbl"></span></div>
+  </div>
+  <div class="legend">
+    <span><b style="background:var(--bentoya)"></b>Bentoya · BSP BGM BGC</span>
+    <span><b style="background:var(--katsuq)"></b>KatsuQ · KPM KGM KGC</span>
+    <span><b style="background:var(--marusan)"></b>Marusan · MGM</span>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="years" id="years" aria-label="Tahun"></div>
+  <div class="months" id="months" aria-label="Bulan"></div>
+  <span class="tag" id="periodTag"></span>
+  <details class="dd" id="locDD"><summary id="locSum">Lokasi: Semua</summary><div class="panel" id="locPanel" role="group" aria-label="Pilih lokasi"></div></details>
+  <div class="refresh" id="refreshBox" hidden><span class="msg" id="refreshMsg" role="status"></span><button type="button" id="refreshBtn">Refresh data</button></div>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<section>
+  <div class="sec-head"><h2>Per brand</h2><span class="muted" style="font-size:.85rem">Realisasi terhadap target dan tahun lalu, serta rasio pemakaian resep terhadap omzet</span></div>
+  <div class="brands" id="brands"></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Rincian outlet</h2><span class="muted" style="font-size:.85rem">Nilai dalam Rp juta</span></div>
+  <div class="card scroll"><table id="outletTbl"></table></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Tren</h2></div>
+  <div class="grid2">
+    <div class="card"><h3>Omzet bulanan per tahun</h3><div class="muted" style="font-size:.8rem" id="yoySub">Total realisasi seluruh outlet · Rp juta</div><div class="chartbox"><canvas id="cYoY"></canvas></div></div>
+    <div class="card"><h3 id="trendTitle">Omzet per brand vs target</h3><div class="muted" style="font-size:.8rem">Rp juta · bulan berjalan s.d. tanggal data terakhir</div><div class="chartbox"><canvas id="cTrend"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-top:12px"><h3>Rasio pemakaian resep / omzet</h3><div class="muted" style="font-size:.8rem">% per outlet · seluruh bulan yang punya data resep</div><div class="chartbox"><canvas id="cFc"></canvas></div></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2 id="hmAchTitle">Pencapaian target per outlet</h2><div class="legend"><span><b style="background:var(--good-bg);border:1px solid var(--good)"></b>≥100%</span><span><b style="background:var(--warn-bg);border:1px solid var(--warn)"></b>85–99%</span><span><b style="background:var(--bad-bg);border:1px solid var(--bad)"></b>&lt;85%</span></div></div>
+  <div class="card scroll"><table class="hm" id="hmAch"></table></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2 id="hmYoYTitle">Pertumbuhan vs tahun lalu</h2><span class="muted" style="font-size:.85rem">Realisasi dibanding bulan yang sama tahun sebelumnya</span></div>
+  <div class="card scroll"><table class="hm" id="hmYoY"></table></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2 id="hmFcTitle">Rasio pemakaian resep per outlet</h2><span class="muted" style="font-size:.85rem">Pemakaian resep ÷ realisasi omzet · makin gelap makin tinggi</span></div>
+  <div class="card scroll"><table class="hm" id="hmFc"></table></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Detail outlet</h2>
+    <label class="muted" style="font-size:.85rem">Outlet <select id="outletSel"></select></label>
+  </div>
+  <div class="card" id="dailyCard"><h3 id="dailyTitle"></h3><div class="muted" style="font-size:.8rem" id="dailySub"></div><div class="chartbox"><canvas id="cDaily"></canvas></div></div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="card"><h3>5 bahan resep terbesar</h3><div class="muted" style="font-size:.8rem;margin-bottom:10px" id="topSub">Rp juta</div><div class="hbar" id="topRec"></div></div>
+    <div class="card"><h3>Pemakaian non-resep per jenis</h3><div class="muted" style="font-size:.8rem;margin-bottom:10px">Rp juta</div><div class="hbar" id="nonJ"></div></div>
+    <div class="card" id="nonKCard"><h3>Non-resep per kategori barang</h3><div class="muted" style="font-size:.8rem;margin-bottom:10px" id="nkSub">Rp juta · tersedia untuk 3 bulan terakhir</div><div class="hbar" id="nonK"></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Catatan data</h2></div>
+  <ul class="notes" id="notes">
+    <li>Sumber: file bulanan <em>OMZET … PT ISA</em> dan <em>PEMAKAIAN DAN PENYESUAIAN</em> (sheet PEMAKAIAN RECIPE dan PEMAKAIAN) di Google Drive, mulai November 2024. Data diambil <span id="asof"></span>.</li>
+    <li>Januari–Oktober 2024 memakai penjualan bersih dari file <em>PENJUALAN 2024 ISA</em>: tanpa target dan tanpa data pemakaian, sehingga hanya dipakai untuk perbandingan tahun lalu.</li>
+    <li id="runNote"></li>
+    <li>Pertumbuhan vs tahun lalu untuk bulan berjalan dibandingkan dengan bulan yang sama tahun lalu secara proporsional jumlah hari. Total pertumbuhan termasuk outlet baru (MGM mulai Juli 2026).</li>
+    <li>MGM dibuka 9 Juli 2026; target sebelum tanggal itu tidak dihitung. BGC tidak memiliki omzet sejak Februari 2026. Lokasi non-outlet (CK, DC, HO, CPU, PV, CAT) hanya masuk total non-resep sebagai lokasi pendukung.</li>
+  </ul>
+  <h3 style="margin-top:16px" id="dqHead">Perlu dicek di file sumber</h3>
+  <ul class="notes" id="dq"></ul>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ===== DATA START =====
+const ASOF="6 Okt 2026 09.58";
+const M=["2401","2402","2403","2404","2405","2406","2407","2408","2409","2410","2411","2412","2501","2502","2503","2504","2505","2506","2507","2508","2509","2510","2511","2512","2601","2602","2603","2604","2605","2606","2607","2608","2609","2610"];
+const ML={"2401":"Jan","2402":"Feb","2403":"Mar","2404":"Apr","2405":"Mei","2406":"Jun","2407":"Jul","2408":"Agu","2409":"Sep","2410":"Okt","2411":"Nov","2412":"Des","2501":"Jan","2502":"Feb","2503":"Mar","2504":"Apr","2505":"Mei","2506":"Jun","2507":"Jul","2508":"Agu","2509":"Sep","2510":"Okt","2511":"Nov","2512":"Des","2601":"Jan","2602":"Feb","2603":"Mar","2604":"Apr","2605":"Mei","2606":"Jun","2607":"Jul","2608":"Agu","2609":"Sep","2610":"Okt"};
+const RUN={"m":"2610","omz":5,"pmk":0};
+const PMK_LAST={};
+const DQ=["Pemakaian resep Nov 2024 tidak tersedia (sheet PEMAKAIAN RECIPE tidak ditemukan).","Pemakaian resep Des 2024 tidak ada untuk BSP, BGC, KPM, KGM, KGC; rasio resep outlet tersebut tidak ditampilkan.","File 2507_OMZET JULI 2025 PT ISA: kolom KPM kini berisi #REF! (rumus rusak). Angka KPM Juli 2025 di dashboard memakai nilai terakhir yang valid (realisasi Rp 164.493 rb, target Rp 193.300 rb).","File PEMAKAIAN DAN PENYESUAIAN_2610 masih berisi transaksi September (tampaknya salinan file 2609), sehingga pemakaian Oktober belum ditampilkan."];
+const OM={"2401":{"BSP":[0,378206],"BGM":[0,166521],"BGC":[0,50228],"KPM":[0,175301],"KGM":[0,324400],"KGC":[0,94702]},"2402":{"BSP":[0,393296],"BGM":[0,176233],"BGC":[0,67407],"KPM":[0,172048],"KGM":[0,352496],"KGC":[0,120554]},"2403":{"BSP":[0,499907],"BGM":[0,223408],"BGC":[0,70562],"KPM":[0,202040],"KGM":[0,365474],"KGC":[0,95327]},"2404":{"BSP":[0,472107],"BGM":[0,248995],"BGC":[0,65626],"KPM":[0,196080],"KGM":[0,415115],"KGC":[0,85288]},"2405":{"BSP":[0,448642],"BGM":[0,235035],"BGC":[0,79224],"KPM":[0,189838],"KGM":[0,390390],"KGC":[0,111123]},"2406":{"BSP":[0,494360],"BGM":[0,212161],"BGC":[0,67771],"KPM":[0,209802],"KGM":[0,419832],"KGC":[0,91917]},"2407":{"BSP":[0,474306],"BGM":[0,217423],"BGC":[0,94917],"KPM":[0,185613],"KGM":[0,379967],"KGC":[0,78430]},"2408":{"BSP":[0,438038],"BGM":[0,221582],"BGC":[0,68824],"KPM":[0,165348],"KGM":[0,342898],"KGC":[0,70512]},"2409":{"BSP":[0,449887],"BGM":[0,233480],"BGC":[0,74805],"KPM":[0,164708],"KGM":[0,347383],"KGC":[0,64495]},"2410":{"BSP":[0,468251],"BGM":[0,227053],"BGC":[0,70167],"KPM":[0,173540],"KGM":[0,340395],"KGC":[0,68620]},"2411":{"BSP":[518000,555208],"BGM":[288000,245325],"BGC":[105000,72097],"KPM":[211500,190336],"KGM":[401000,332973],"KGC":[82400,68017]},"2412":{"BSP":[538400,588775],"BGM":[269800,260004],"BGC":[144300,90406],"KPM":[239800,198971],"KGM":[432800,414156],"KGC":[157700,78352]},"2501":{"BSP":[530400,473066],"BGM":[251100,238510],"BGC":[145000,53446],"KPM":[205000,180471],"KGM":[378500,368234],"KGC":[110400,58917]},"2502":{"BSP":[462100,381729],"BGM":[208000,162332],"BGC":[119000,71112],"KPM":[204500,135803],"KGM":[335000,300252],"KGC":[87000,79860]},"2503":{"BSP":[505500,520199],"BGM":[337100,259511],"BGC":[153000,83992],"KPM":[231500,182896],"KGM":[425000,357904],"KGC":[104000,68688]},"2504":{"BSP":[505000,520951],"BGM":[265500,211864],"BGC":[118000,69118],"KPM":[206200,174405],"KGM":[407000,404436],"KGC":[95500,68570]},"2505":{"BSP":[497000,526449],"BGM":[254000,213149],"BGC":[97000,68933],"KPM":[202600,173965],"KGM":[418000,376479],"KGC":[93900,64937]},"2506":{"BSP":[503000,466228],"BGM":[272000,190830],"BGC":[95000,72953],"KPM":[200000,175775],"KGM":[403500,374676],"KGC":[86500,67960]},"2507":{"BSP":[480200,441108],"BGM":[217500,186282],"BGC":[87500,69698],"KPM":[193300,164493],"KGM":[382000,336452],"KGC":[102200,62932]},"2508":{"BSP":[470500,412272],"BGM":[232500,210089],"BGC":[99000,55256],"KPM":[185800,145362],"KGM":[383500,350698],"KGC":[114300,67793]},"2509":{"BSP":[431000,390921],"BGM":[239300,178157],"BGC":[84500,54552],"KPM":[166350,148978],"KGM":[343500,330948],"KGC":[87500,59744]},"2510":{"BSP":[610000,569993],"BGM":[236000,203755],"BGC":[82900,79558],"KPM":[173500,146433],"KGM":[360000,342853],"KGC":[90500,75756]},"2511":{"BSP":[500000,448099],"BGM":[249500,219496],"BGC":[92800,51429],"KPM":[192500,163389],"KGM":[403500,357694],"KGC":[93500,60975]},"2512":{"BSP":[560000,570709],"BGM":[263500,285103],"BGC":[150500,88255],"KPM":[219300,196538],"KGM":[420000,422789],"KGC":[96500,90307]},"2601":{"BSP":[544000,476569],"BGM":[270000,201526],"BGC":[56500,51810],"KPM":[222000,159089],"KGM":[386500,331734],"KGC":[95500,52536]},"2602":{"BSP":[443500,407836],"BGM":[217000,219511],"KPM":[208000,161073],"KGM":[348500,320635],"KGC":[100500,63413]},"2603":{"BSP":[522000,509302],"BGM":[235500,274507],"KPM":[208500,191916],"KGM":[404000,401039],"KGC":[65500,75635]},"2604":{"BSP":[466500,408693],"BGM":[265000,214195],"KPM":[227000,169749],"KGM":[373000,348573],"KGC":[101500,54445]},"2605":{"BSP":[588500,513390],"BGM":[292000,251084],"KPM":[252000,189584],"KGM":[416000,415808],"KGC":[101400,68701]},"2606":{"BSP":[444500,504272],"BGM":[261000,202423],"KPM":[200000,178822],"KGM":[383000,411749],"KGC":[106000,65730]},"2607":{"BSP":[468000,416929],"BGM":[277000,210601],"KPM":[236600,184968],"KGM":[406000,375997],"KGC":[83200,54899],"MGM":[293000,404521]},"2608":{"BSP":[505500,464393],"BGM":[348500,241306],"KPM":[248500,184248],"KGM":[426000,371226],"KGC":[95000,70739],"MGM":[772000,747018]},"2609":{"BSP":[450500,414624],"BGM":[260500,205677],"KPM":[223500,159283],"KGM":[368000,318448],"KGC":[88500,63481],"MGM":[617000,582205]}};
+const OD={"2608":[[1,28000,24772,17000,14409,0,0,15000,11650,22000,21110,4500,3268,40000,34339],[2,30000,32763,18000,15635,0,0,15000,12050,20000,18699,4500,3374,40000,38170],[3,9000,7124,7000,5286,0,0,5000,1728,8500,7772,3500,399,15000,14936],[4,8000,5603,6500,2086,0,0,4500,2409,8500,6005,2500,902,15000,14291],[5,8000,9521,6500,4136,0,0,4500,3809,8500,7530,2500,859,15000,17103],[6,9500,6621,7000,4975,0,0,5000,2913,8500,7973,2500,1274,17000,18417],[7,12000,11741,9000,7334,0,0,5000,5583,12000,13609,3500,1274,25000,26135],[8,30000,23742,18000,16859,0,0,15000,8867,22000,22688,4000,4928,40000,37649],[9,28000,23736,18000,21159,0,0,15000,10134,22000,22185,4000,3455,40000,41062],[10,8000,6065,7500,3914,0,0,4500,2952,9000,7077,2500,1439,15000,13314],[11,8000,6813,7000,2799,0,0,4500,3775,8500,6843,2500,785,15000,18103],[12,8000,7192,7500,5141,0,0,4500,3388,8500,7041,2500,904,15000,20493],[13,8500,7414,7500,5095,0,0,5000,3275,8500,8406,2500,1210,17000,18950],[14,12000,9535,8000,8820,0,0,5000,4449,12000,10486,2500,1317,24000,24787],[15,30000,20300,18000,14362,0,0,15000,9314,22000,16920,4000,3177,40000,33893],[16,30000,25926,18000,12884,0,0,15000,11684,22000,18376,4000,3650,40000,35198],[17,25000,17575,15000,9460,0,0,4500,6440,22000,18515,3500,2191,40000,33248],[18,8000,7766,7000,1580,0,0,4500,2205,8500,6459,2500,499,15000,14016],[19,8000,7408,7000,2126,0,0,4500,2695,8500,5131,2500,1001,15000,11317],[20,8000,9332,8000,5308,0,0,5000,3134,9000,5239,2500,415,17000,17074],[21,10000,11853,8000,3662,0,0,5000,4786,12000,9202,3000,1670,22000,22710],[22,28000,23712,18000,7316,0,0,15000,10336,22000,16961,3000,2080,38000,33360],[23,28000,26391,18000,11173,0,0,15000,11711,22000,16236,4000,2415,38000,35824],[24,8000,9955,7000,3288,0,0,3500,3119,8500,9545,2500,756,15000,20695],[25,25000,23387,15000,9769,0,0,4000,8011,8500,16741,2500,2949,15000,36396],[26,8000,8056,7000,3329,0,0,4500,2312,8500,6023,2500,2749,15000,12296],[27,8500,8353,7000,4575,0,0,5000,3400,8500,6755,2500,3654,17000,13659],[28,10000,12161,7000,5246,0,0,6000,3932,12000,11782,2500,4857,20000,16551],[29,28000,27638,8000,10890,0,0,15000,10568,22000,16632,3500,6451,39000,29095],[30,28000,32099,18000,11913,0,0,15000,11302,22000,17148,3500,6214,38000,32233],[31,8000,9839,18000,6777,0,0,4500,2317,9500,6137,2500,623,15000,11704]],"2609":[[1,9000,7877,4500,3469,0,0,4000,3028,9000,7245,1500,578,18000,16099],[2,9000,7825,4000,6415,0,0,4000,3113,8500,7417,1500,1214,18000,13116],[3,9000,13730,4500,4768,0,0,4500,2597,9000,8140,2500,3351,18000,14766],[4,12000,10676,8500,4209,0,0,7500,4276,12000,10409,4500,4587,20000,18104],[5,30000,25990,17000,10055,0,0,15000,10388,20000,17891,5500,6573,35000,28727],[6,30000,29631,17000,14568,0,0,15000,11767,20000,16609,5500,5179,35000,37281],[7,9000,7256,17000,3873,0,0,4000,1682,9000,5840,2000,1498,15000,13706],[8,9000,9047,4500,3174,0,0,4000,2187,8500,6980,1500,492,15000,14734],[9,9000,7634,4500,3611,0,0,4000,2623,8500,6324,1500,648,17000,12574],[10,9000,8999,4000,3757,0,0,4500,3677,9000,6877,2500,822,17000,15421],[11,12000,14783,8500,8159,0,0,7500,3425,12000,9066,3000,2458,20000,21142],[12,30000,26141,17000,21554,0,0,15000,9566,20000,19885,4500,3304,35000,36364],[13,30000,29008,17000,10307,0,0,15000,9999,20000,18951,5500,4738,35000,43147],[14,9000,8361,4500,2188,0,0,3500,2563,9000,4308,1500,676,15000,9413],[15,8500,7448,4000,3948,0,0,4000,2857,8500,5892,1500,1348,13000,11436],[16,9500,12886,4500,4876,0,0,4000,2687,8500,8041,1500,366,13000,14861],[17,9000,7922,4500,5204,0,0,4500,2449,9500,11654,2500,2114,15000,17997],[18,12000,9867,8500,7811,0,0,7000,4610,12000,12309,3500,1678,18000,16626],[19,30000,25089,17000,12547,0,0,15000,11297,20000,19952,5500,3221,35000,31413],[20,30000,21793,17000,14160,0,0,15000,11711,20000,19744,5500,4251,35000,29491],[21,9000,8201,4500,4373,0,0,4000,3200,9000,6519,1500,831,12000,8590],[22,8500,8763,4000,3313,0,0,4000,2249,8500,6145,1500,987,12000,12623],[23,9500,9443,4000,3721,0,0,4000,2311,9000,10372,1500,707,12000,12562],[24,9500,8455,4500,4853,0,0,4500,3877,9500,6698,2000,1412,13000,14061],[25,12000,11782,8000,5171,0,0,7500,6571,12000,10550,3500,1524,13000,20423],[26,30000,19258,17000,10150,0,0,15000,12514,20000,15496,5500,2672,35000,28497],[27,30000,28436,17000,11412,0,0,15000,11876,20000,16967,5500,3141,35000,32474],[28,9000,9231,4500,4338,0,0,4500,3888,9000,5626,1500,866,15000,8526],[29,9000,7354,4500,6312,0,0,4000,2856,9000,8077,1500,1190,14000,12311],[30,9000,11738,4500,3381,0,0,4000,3439,9000,8464,1500,1055,14000,15720]],"2610":[[1,8000,9696,3500,4798,0,0,4000,5097,8000,9122,0,1217,15000,12977],[2,12000,12650,4500,5164,0,0,4500,5020,10000,14143,0,2585,20000,17887],[3,29000,21823,15000,9720,0,0,12000,8786,20000,20643,0,3723,35000,29279],[4,28000,26329,15000,15105,0,0,12000,10797,20000,19278,0,3609,37000,32011],[5,8000,9983,3500,3358,0,0,4000,3069,8000,9509,0,1053,12000,11306],[6,8000,0,3500,0,0,0,3500,0,7500,0,0,0,12000,0],[7,9000,0,3500,0,0,0,3000,0,7500,0,0,0,12000,0],[8,9000,0,4000,0,0,0,3500,0,8000,0,0,0,18000,0],[9,10000,0,4500,0,0,0,4500,0,10000,0,0,0,20000,0],[10,28000,0,12000,0,0,0,12000,0,20000,0,0,0,35000,0],[11,30000,0,12000,0,0,0,12000,0,20000,0,0,0,35000,0],[12,9000,0,4000,0,0,0,3500,0,7500,0,0,0,12000,0],[13,8000,0,3500,0,0,0,3500,0,7500,0,0,0,12000,0],[14,9000,0,4000,0,0,0,4000,0,8000,0,0,0,12000,0],[15,9500,0,4500,0,0,0,4000,0,8000,0,0,0,15000,0],[16,12000,0,4500,0,0,0,4500,0,10000,0,0,0,20000,0],[17,29000,0,15000,0,0,0,12000,0,22000,0,0,0,35000,0],[18,29000,0,15000,0,0,0,12000,0,22000,0,0,0,35000,0],[19,9000,0,4000,0,0,0,3500,0,8500,0,0,0,10000,0],[20,8000,0,3500,0,0,0,3500,0,8000,0,0,0,10000,0],[21,9000,0,3500,0,0,0,4000,0,8000,0,0,0,12000,0],[22,9500,0,3500,0,0,0,4000,0,8500,0,0,0,14000,0],[23,10000,0,4500,0,0,0,4500,0,10000,0,0,0,20000,0],[24,29000,0,12000,0,0,0,12000,0,18000,0,0,0,35000,0],[25,29000,0,12000,0,0,0,12000,0,18000,0,0,0,35000,0],[26,9000,0,4000,0,0,0,3500,0,8500,0,0,0,10000,0],[27,9000,0,3500,0,0,0,3500,0,8500,0,0,0,10000,0],[28,9000,0,3500,0,0,0,3500,0,9000,0,0,0,10000,0],[29,9000,0,4000,0,0,0,4000,0,9000,0,0,0,12000,0],[30,12000,0,4500,0,0,0,4500,0,10000,0,0,0,17000,0],[31,30000,0,12000,0,0,0,12000,0,18000,0,0,0,35000,0]]};
+const REC={"2411":{},"2412":{"BGM":75538},"2501":{"BSP":132182,"BGM":68044,"BGC":15633,"KPM":52660,"KGM":102740,"KGC":17114},"2502":{"BSP":106536,"BGM":46712,"BGC":19424,"KPM":38820,"KGM":81601,"KGC":22176},"2503":{"BSP":140758,"BGM":71573,"BGC":22619,"KPM":51512,"KGM":95526,"KGC":19171},"2504":{"BSP":148997,"BGM":63048,"BGC":20297,"KPM":51454,"KGM":114130,"KGC":19069},"2505":{"BSP":149166,"BGM":63706,"BGC":19371,"KPM":50026,"KGM":105689,"KGC":18635},"2506":{"BSP":134931,"BGM":59152,"BGC":22284,"KPM":50974,"KGM":104939,"KGC":18921,"CAT":1002},"2507":{"BSP":127659,"BGM":57642,"BGC":20178,"KPM":46656,"KGM":91248,"KGC":17154},"2508":{"BSP":120574,"BGM":63791,"BGC":15871,"KPM":41785,"KGM":95918,"KGC":19194},"2509":{"BSP":112759,"BGM":52382,"BGC":15657,"KPM":41502,"KGM":88386,"KGC":15559},"2510":{"BSP":185687,"BGM":62840,"BGC":21969,"KPM":40540,"KGM":92454,"KGC":20030,"CAT":1245},"2511":{"BSP":128699,"BGM":64992,"BGC":15040,"KPM":45376,"KGM":98310,"KGC":16531},"2512":{"BSP":167043,"BGM":87818,"BGC":24184,"KPM":56977,"KGM":119829,"KGC":25101,"CAT":6828},"2601":{"BSP":139773,"BGM":61867,"BGC":14940,"KPM":45624,"KGM":91395,"KGC":15752},"2602":{"BSP":119630,"BGM":67382,"BGC":1060,"KPM":46297,"KGM":90460,"KGC":18229},"2603":{"BSP":146944,"BGM":82890,"KPM":54997,"KGM":110026,"KGC":21111,"CAT":4321},"2604":{"BSP":124227,"BGM":67247,"KPM":50588,"KGM":97716,"KGC":15077,"CAT":5155},"2605":{"BSP":152400,"BGM":76200,"KPM":53615,"KGM":113783,"KGC":19127,"CAT":1702},"2606":{"BSP":152302,"BGM":64187,"KPM":49111,"KGM":108889,"KGC":17460},"2607":{"BSP":119047,"BGM":63528,"KPM":49103,"KGM":96294,"KGC":14027,"MGM":131319},"2608":{"BSP":134908,"BGM":73022,"KPM":49915,"KGM":96332,"KGC":18021,"MGM":262274,"CAT":498},"2609":{"BSP":125327,"BGM":63594,"KPM":45367,"KGM":87098,"KGC":17362,"MGM":212625}};
+const NON={"2411":{"BSP":17083,"BGM":8400,"BGC":4928,"KPM":15706,"KGM":31594,"KGC":9402,"DC":12303,"CK":408,"CAT":507},"2412":{"BSP":19137,"BGM":9223,"BGC":5674,"KPM":18483,"KGM":37166,"KGC":8209,"DC":56955,"CK":560,"CAT":35885},"2501":{"BSP":18839,"BGM":12485,"BGC":4137,"KPM":17609,"KGM":34237,"KGC":7467,"DC":2867,"CK":657},"2502":{"BSP":15481,"BGM":7786,"BGC":4883,"KPM":14596,"KGM":31323,"KGC":8706,"DC":3700,"CAT":5850,"CK":1710},"2503":{"BSP":18493,"BGM":12619,"BGC":3715,"KPM":17616,"KGM":33176,"KGC":8057,"DC":3009,"CK":552,"CAT":940},"2504":{"BSP":19298,"BGM":10912,"BGC":5132,"KPM":17210,"KGM":37988,"KGC":7731,"CAT":671,"DC":3853,"CK":1845},"2505":{"BSP":18276,"BGM":13077,"BGC":4134,"KPM":18226,"KGM":37100,"KGC":7500,"DC":3630,"CK":464},"2506":{"BSP":20046,"BGM":10621,"BGC":4363,"KPM":17503,"KGM":37167,"KGC":9361,"DC":3697,"CK":1095,"CAT":8668},"2507":{"BSP":17864,"BGM":10934,"BGC":3937,"KPM":15505,"KGM":33010,"KGC":5962,"DC":3968,"HO":731,"CK":3251},"2508":{"BGC":1298,"BSP":6783,"BGM":4161,"KPM":4973,"KGM":11509,"KGC":2733,"CAT":16415,"DC":1130,"CK":1854,"HO":75,"PV":32},"2509":{"BSP":16186,"BGM":7703,"BGC":4405,"KPM":14220,"KGM":31397,"KGC":7069,"DC":3016,"CK":3171,"HO":763,"PV":1043,"CAT":272},"2510":{"BSP":24902,"BGM":9290,"BGC":3231,"KPM":14003,"KGM":33613,"KGC":7829,"DC":3363,"HO":123,"CAT":1135,"PV":373,"CK":1175},"2511":{"BSP":14269,"BGM":10640,"BGC":3350,"KPM":15776,"KGM":35016,"KGC":7998,"DC":3910,"HO":658,"PV":365,"CK":1564},"2512":{"BSP":18375,"BGM":10729,"BGC":5017,"KPM":17227,"KGM":38834,"KGC":8829,"PV":505,"DC":3539,"CK":8824,"CAT":1473,"HO":170},"2601":{"BSP":19610,"BGM":10181,"BGC":3661,"KPM":17987,"KGM":36383,"KGC":6970,"HO":220,"DC":2504,"CK":2970,"PV":1050,"CPU":274},"2602":{"BSP":14651,"BGM":7557,"BGC":152,"KPM":16385,"KGM":30256,"KGC":6961,"DC":414,"CK":3145,"CPU":1153,"PV":1021,"HO":372,"CAT":296},"2603":{"BSP":19513,"BGM":9103,"KPM":17413,"KGM":37010,"KGC":7952,"DC":339,"PV":1505,"CPU":1422,"CK":3689,"HO":371,"CAT":796},"2604":{"BSP":19475,"BGM":7124,"KPM":16922,"KGM":32362,"KGC":7071,"PV":1301,"DC":962,"CPU":1301,"HO":157,"CK":3260,"CAT":150},"2605":{"BSP":17749,"BGM":11061,"KPM":19201,"KGM":37906,"KGC":7753,"DC":648,"CPU":1870,"CK":2108,"CAT":60,"PV":1246,"HO":276},"2606":{"BSP":20385,"BGM":9602,"KPM":16558,"KGM":36458,"KGC":6797,"DC":2923,"CPU":2720,"CK":5344,"PV":751,"HO":316,"MGM":302},"2607":{"BSP":17593,"BGM":9452,"KPM":17158,"KGM":37181,"KGC":7526,"CPU":1890,"PV":1356,"MGM":15225,"DC":1109,"HO":290,"CK":4150},"2608":{"BSP":16034,"BGM":9467,"KPM":17714,"KGM":35920,"KGC":8796,"MGM":27554,"CK":4279,"DC":515,"HO":326,"CPU":2067,"PV":894},"2609":{"BSP":15431,"BGM":8171,"KPM":15758,"KGM":36160,"KGC":8864,"MGM":27097,"CPU":2443,"CK":4157,"DC":999,"HO":406,"PV":447}};
+const RD={"2608":{"BSP":[6882,8916,1996,1679,2831,1915,3399,6628,6552,1802,1986,2063,2193,2656,5712,6989,4858,2341,2252,2781,3598,7149,7725,3099,6717,2552,2775,4039,7916,9454,3453],"BGM":[3959,4264,1674,771,1220,1677,2351,4506,5736,1048,828,1470,1516,2839,4238,4005,2865,579,686,1736,1334,2261,3280,1212,2932,1231,1670,1752,3368,3384,2631],"KPM":[2959,3051,427,640,986,717,1454,2301,2638,772,993,908,865,1241,2395,3102,1725,640,731,903,1294,2841,3343,868,2183,673,1059,1161,3085,3262,698],"KGM":[5147,4555,1850,1574,1861,1985,3537,5571,5445,1864,1761,1808,2052,2767,4585,4817,4864,1766,1326,1359,2390,4525,4370,2404,4499,1643,1857,3248,4535,4682,1683],"KGC":[819,831,98,227,199,300,580,1196,829,340,195,243,293,343,796,937,558,121,243,99,391,516,632,182,715,689,951,1162,1790,1583,162],"MGM":[11494,12510,4776,4493,5309,6536,9315,12881,13678,4364,6257,6897,6420,8315,11989,12395,11688,5146,4327,6493,8467,12714,13718,7785,12622,4388,5075,6124,10573,11459,4068]},"2609":{"BSP":[2518,2457,4230,3158,7520,8376,2214,2772,2294,2811,4487,7609,8269,2486,2190,4790,2518,3096,7416,6382,2872,2768,2892,2790,3639,5598,8414,2837,2241,3682],"BGM":[1016,2014,1388,1325,3067,4113,1253,971,1217,1357,2734,6366,3092,748,1154,1521,1723,2415,3720,4333,1389,1062,1140,1611,1612,3005,3410,1498,2310,1031],"KPM":[847,888,706,1138,2883,3328,467,639,773,999,972,2670,2872,703,820,744,699,1268,3273,3352,922,689,655,1124,1960,3562,3465,1179,799,973],"KGM":[1971,2029,2260,2796,4606,4420,1637,1960,1793,1891,2481,5427,5129,1239,1647,2228,3229,3394,5450,5351,1749,1656,2820,1907,2923,4280,4608,1567,2251,2397],"KGC":[155,313,897,1258,1788,1381,432,137,166,234,685,883,1290,182,380,104,560,467,867,1190,224,250,194,400,427,759,904,237,326,271],"MGM":[5637,4583,5080,6999,10738,14145,5018,5335,4404,5640,7759,13084,15979,3677,4268,5461,6278,5874,11358,10913,3077,4621,4511,5043,7414,10468,11749,3224,4574,5712]}};
+const TOP={"2411":{},"2412":{"BGM":[["Salmon slice 100g",7878],["Beras jepang",5877],["Ayam bl 150gr",5692],["Beef calbee",4904],["Lunch box + lid hiro",4591]]},"2501":{"BSP":[["Salmon slice 100g",16889],["Beras jepang",9987],["Ayam bl 150gr",9800],["Telur ayam omega 16pcs/kg",7654],["Crab claw",7199]],"BGM":[["Salmon slice 100g",7623],["Ayam bl 150gr",5715],["Beras jepang",5322],["Telur ayam omega 16pcs/kg",4044],["Crab claw",3880]],"BGC":[["Salmon slice 100g",1901],["Ayam bl 150gr",1333],["Beras jepang",1163],["Telur ayam omega 16pcs/kg",904],["Crab claw",828]],"KPM":[["Ayam bsl 100gr",6613],["Beras jepang",6466],["Chicken mozza 60g",5021],["Ayam bsb 100gr",3565],["Telur ayam omega 16pcs/kg",3140]],"KGM":[["Beras jepang",12013],["Ayam bsl 100gr",11976],["Chicken mozza 60g",8486],["Ayam bsb 100gr",6463],["Telur ayam omega 16pcs/kg",6373]],"KGC":[["Ayam bsl 100gr",2330],["Beras jepang",2276],["Chicken mozza 60g",2197],["Ayam bsb 100gr",1301],["Telur ayam omega 16pcs/kg",1140]]},"2502":{"BSP":[["Salmon slice 100g",16056],["Ayam bl 150gr",8542],["Beras jepang",8086],["Telur ayam omega 16pcs/kg",5951],["Crab claw",5913]],"BGM":[["Salmon slice 100g",5913],["Ayam bl 150gr",4211],["Beras jepang",3648],["Lunch box + lid hiro",2983],["Telur ayam omega 16pcs/kg",2706]],"BGC":[["Ayam bl 150gr",1797],["Salmon slice 100g",1790],["Beras jepang",1521],["Telur ayam omega 16pcs/kg",1218],["Crab claw",998]],"KPM":[["Ayam bsl 100gr",4965],["Beras jepang",4849],["Chicken mozza 60g",4607],["Ayam bsb 100gr",2912],["Telur ayam omega 16pcs/kg",2377]],"KGM":[["Ayam bsl 100gr",9886],["Beras jepang",9750],["Chicken mozza 60g",8896],["Ayam bsb 100gr",5314],["Telur ayam omega 16pcs/kg",4994]],"KGC":[["Chicken mozza 60g",3508],["Ayam bsl 100gr",3233],["Beras jepang",3110],["Ayam bsb 100gr",1827],["Telur ayam omega 16pcs/kg",1346]]},"2503":{"BSP":[["Salmon slice 100g",17149],["Beras jepang",11650],["Ayam bl 150gr",10776],["Telur ayam omega 16pcs/kg",7805],["Crab claw",7544]],"BGM":[["Salmon slice 100g",8321],["Ayam bl 150gr",5979],["Beras jepang",5782],["Crab claw",4082],["Telur ayam omega 16pcs/kg",4050]],"BGC":[["Salmon slice 100g",2302],["Ayam bl 150gr",1982],["Beras jepang",1860],["Telur ayam omega 16pcs/kg",1380],["Crab claw",1107]],"KPM":[["Chicken mozza 60g",6892],["Beras jepang",6868],["Ayam bsl 100gr",5860],["Ayam bsb 100gr",3488],["Telur ayam omega 16pcs/kg",2865]],"KGM":[["Beras jepang",12186],["Chicken mozza 60g",10826],["Ayam bsl 100gr",10728],["Telur ayam omega 16pcs/kg",5895],["Ayam bsb 100gr",5552]],"KGC":[["Beras jepang",2728],["Chicken mozza 60g",2688],["Ayam bsl 100gr",2642],["Ayam bsb 100gr",1321],["Telur ayam omega 16pcs/kg",1260]]},"2504":{"BSP":[["Salmon slice 100g",17482],["Beras jepang",12367],["Ayam bl 150gr",10354],["Telur ayam omega 16pcs/kg",8488],["Crab claw",8391]],"BGM":[["Salmon slice 100g",6986],["Beras jepang",5232],["Ayam bl 150gr",4659],["Lunch box + lid hiro",4362],["Beef calbee 4mm",4319]],"BGC":[["Beras jepang",1715],["Ayam bl 150gr",1648],["Salmon slice 100g",1541],["Telur ayam omega 16pcs/kg",1429],["Lunch box + lid hiro",1025]],"KPM":[["Beras jepang",6970],["Chicken mozza 60g",6883],["Ayam bsl 100gr",6064],["Ayam bsb 100gr",3553],["Telur ayam omega 16pcs/kg",2952]],"KGM":[["Beras jepang",14894],["Ayam bsl 100gr",13363],["Chicken mozza 60g",12341],["Ayam bsb 100gr",6807],["Telur ayam omega 16pcs/kg",6680]],"KGC":[["Chicken mozza 60g",3070],["Beras jepang",2803],["Ayam bsl 100gr",2628],["Ayam bsb 100gr",1473],["Telur ayam omega 16pcs/kg",1248]]},"2505":{"BSP":[["Salmon slice 100g",17082],["Beras jepang",11592],["Ayam bl 150gr",10930],["Telur ayam omega 16pcs/kg",8670],["Crab claw",8329]],"BGM":[["Salmon slice 100g",7849],["Ayam bl 150gr",5431],["Beras jepang",4986],["Beef calbee 4mm",4758],["Lunch box + lid hiro",3669]],"BGC":[["Salmon slice 100g",2111],["Ayam bl 150gr",1531],["Beras jepang",1529],["Telur ayam omega 16pcs/kg",1193],["Crab claw",920]],"KPM":[["Chicken mozza 60g",6480],["Beras jepang",6302],["Ayam bsl 100gr",6064],["Ayam bsb 100gr",3597],["Telur ayam omega 16pcs/kg",2917]],"KGM":[["Beras jepang",12803],["Chicken mozza 60g",12598],["Ayam bsl 100gr",11710],["Ayam bsb 100gr",6431],["Telur ayam omega 16pcs/kg",6301]],"KGC":[["Chicken mozza 60g",3028],["Ayam bsl 100gr",2643],["Beras jepang",2527],["Ayam bsb 100gr",1430],["Telur ayam omega 16pcs/kg",1223]]},"2506":{"BSP":[["Salmon slice 100g",20523],["Ayam bl 150gr",9519],["Beras jepang",8401],["Telur ayam omega 16pcs/kg",7704],["Crab claw",6964]],"BGM":[["Salmon slice 100g",9059],["Ayam bl 150gr",4889],["Beras jepang",4149],["Telur ayam omega 16pcs/kg",3408],["Crab claw",3263]],"BGC":[["Salmon slice 100g",2186],["Beef teriyaki stir fry",1916],["Ayam bl 150gr",1855],["Beras jepang",1502],["Telur ayam omega 16pcs/kg",1152]],"KPM":[["Chicken mozza 60g",6809],["Ayam bsl 100gr",6779],["Beras jepang",5745],["Ayam bsb 100gr",3382],["Telur ayam omega 16pcs/kg",3117]],"KGM":[["Ayam bsl 100gr",12759],["Chicken mozza 60g",12661],["Beras jepang",11220],["Telur ayam omega 16pcs/kg",6691],["Ayam bsb 100gr",5832]],"KGC":[["Ayam bsl 100gr",2852],["Chicken mozza 60g",2451],["Beras jepang",2377],["Ayam bsb 100gr",1597],["Telur ayam omega 16pcs/kg",1430]]},"2507":{"BSP":[["Salmon slice 100g",17686],["Ayam bl 150gr",9506],["Telur ayam omega 16pcs/kg",7259],["Beras jepang",6777],["Crab claw",6664]],"BGM":[["Salmon slice 100g",8833],["Ayam bl 150gr",5111],["Lunch box + lid hiro",3244],["Telur ayam omega 16pcs/kg",3227],["Beras jepang",3176]],"BGC":[["Salmon slice 100g",2542],["Ayam bl 150gr",1963],["Telur ayam omega 16pcs/kg",1169],["Beras jepang",1083],["Crab claw",952]],"KPM":[["Chicken mozza 60g",6817],["Ayam bsl 100gr",6449],["Beras jepang",4453],["Telur ayam omega 16pcs/kg",3318],["Ayam bsb 100gr",2856]],"KGM":[["Ayam bsl 100gr",11672],["Chicken mozza 60g",11550],["Beras jepang",8023],["Telur ayam omega 16pcs/kg",6701],["Ayam bsb 100gr",5079]],"KGC":[["Ayam bsl 100gr",2729],["Chicken mozza 60g",2310],["Beras jepang",1818],["Telur ayam omega 16pcs/kg",1470],["Ayam bsb 100gr",1096]]},"2508":{"BSP":[["Salmon slice 100g",17956],["Ayam bl 150gr",8935],["Telur ayam omega 16pcs/kg",6860],["Crab claw",6409],["Beras jepang",6403]],"BGM":[["Salmon slice 100g",9732],["Ayam bl 150gr",5517],["Lunch box + lid hiro",4009],["Telur ayam omega 16pcs/kg",3595],["Crab claw",3499]],"BGC":[["Salmon slice 100g",2199],["Ayam bl 150gr",1551],["Beef crispy coated teriyaki",1006],["Telur ayam omega 16pcs/kg",973],["Beras jepang",914]],"KPM":[["Chicken mozza 60g",6902],["Ayam bsl 100gr",4954],["Beras jepang",3702],["Ayam bsb 100gr",2870],["Telur ayam omega 16pcs/kg",2431]],"KGM":[["Chicken mozza 60g",14221],["Ayam bsl 100gr",11751],["Beras jepang",8139],["Telur ayam omega 16pcs/kg",6376],["Ayam bsb 100gr",6115]],"KGC":[["Chicken mozza 60g",3745],["Ayam bsl 100gr",2340],["Beras jepang",1967],["Ayam bl blok 20gr",1550],["Ayam bsb 100gr",1261]]},"2509":{"BSP":[["Salmon slice 100g",17159],["Ayam bl 150gr",6495],["Beef crispy coated teriyaki",6366],["Telur ayam omega 16pcs/kg",6243],["Crab claw",6143]],"BGM":[["Salmon slice 100g",9164],["Ayam bl 150gr",3935],["Telur ayam omega 16pcs/kg",3103],["Lunch box + lid hiro",2913],["Crab claw",2808]],"BGC":[["Salmon slice 100g",2179],["Ayam bl 150gr",1512],["Beef crispy coated teriyaki",1087],["Lunch box + lid hiro",1072],["Telur ayam omega 16pcs/kg",961]],"KPM":[["Chicken mozza 60g",6587],["Ayam bsl 100gr",5261],["Beras jepang",3603],["Telur ayam omega 16pcs/kg",2688],["Ayam bsb 100gr",2639]],"KGM":[["Chicken mozza 60g",13415],["Ayam bsl 100gr",10955],["Beras jepang",6796],["Telur ayam omega 16pcs/kg",6158],["Ayam bsb 100gr",5253]],"KGC":[["Chicken mozza 60g",2943],["Ayam bsl 100gr",2010],["Beras jepang",1484],["Ayam bsb 100gr",1050],["Telur ayam omega 16pcs/kg",1037]]},"2510":{"BSP":[["Ayam bl 150gr marinasi- 10pcs/pak",34272],["Lunch box + lid hiro",23227],["Salmon slice 100g",18204],["Crab claw",12281],["Beras jepang",9062]],"BGM":[["Salmon slice 100g",9715],["Ayam bl 150gr marinasi- 10pcs/pak",5630],["Lunch box + lid hiro",3960],["Telur ayam omega 16pcs/kg",3553],["Crab claw",3395]],"BGC":[["Salmon slice 100g",2609],["Ayam bl 150gr marinasi- 10pcs/pak",2334],["Beef calbee 3.5mm",1530],["Telur ayam omega 16pcs/kg",1430],["Crab claw",1067]],"KPM":[["Chicken mozza 60g",7055],["Ayam bsl 100gr",5090],["Beras jepang",3046],["Ayam bsb 100gr",2595],["Telur ayam omega 16pcs/kg",2364]],"KGM":[["Chicken mozza 60g",14636],["Ayam bsl 100gr",12356],["Beras jepang",7010],["Telur ayam omega 16pcs/kg",6425],["Ayam bsb 100gr",5156]],"KGC":[["Ayam bsl 100gr",3223],["Chicken mozza 60g",2916],["Beras jepang",1778],["Ayam bsb 100gr",1685],["Telur ayam omega 16pcs/kg",1507]]},"2511":{"BSP":[["Salmon slice 100g",20791],["Ayam bl 150gr marinasi- 10pcs/pak",9896],["Telur ayam omega 16pcs/kg",7172],["Crab claw",6538],["Beras jepang",6301]],"BGM":[["Salmon slice 100g",10542],["Ayam bl 150gr marinasi- 10pcs/pak",5725],["Telur ayam omega 16pcs/kg",3657],["Beef crispy coated teriyaki",3428],["Crab claw",3331]],"BGC":[["Salmon slice 100g",1865],["Ayam bl 150gr marinasi- 10pcs/pak",1699],["Telur ayam omega 16pcs/kg",840],["Lunch box + lid hiro",810],["Crab claw",760]],"KPM":[["Chicken mozza 60g",7450],["Ayam bsl 100gr",6177],["Beras jepang",3743],["Telur ayam omega 16pcs/kg",2716],["Ayam bsb 100gr",2691]],"KGM":[["Chicken mozza 60g",15039],["Ayam bsl 100gr",12315],["Beras jepang",8305],["Telur ayam omega 16pcs/kg",6215],["Ayam bsb 100gr",5799]],"KGC":[["Chicken mozza 60g",2882],["Ayam bsl 100gr",2465],["Beras jepang",1634],["Telur ayam omega 16pcs/kg",1251],["Ayam bsb 100gr",1241]]},"2512":{"BSP":[["Salmon slice 100g",23969],["Ayam bl 150gr marinasi- 10pcs/pak",13659],["Beras jepang",9034],["Crab claw",8346],["Lunch box + lid hiro",5690]],"BGM":[["Salmon slice 100g",12892],["Ayam bl 150gr marinasi- 10pcs/pak",9437],["Lunch box + lid hiro",5815],["Crab claw",4685],["Beras jepang",4065]],"BGC":[["Salmon slice 100g",2805],["Ayam bl 150gr marinasi- 10pcs/pak",2702],["Beras jepang",1304],["Crab claw",1234],["Beef crispy coated teriyaki",1202]],"KPM":[["Chicken mozza 60g",8691],["Ayam bsl 100gr",7128],["Beras jepang",4903],["Ayam bsb 100gr",3506],["Curry",2324]],"KGM":[["Ayam bsl 100gr",14365],["Chicken mozza 60g",14099],["Beras jepang",10093],["Ayam bsb 100gr",7053],["Curry",5898]],"KGC":[["Chicken mozza 60g",4862],["Ayam bsl 100gr",3380],["Beras jepang",2149],["Ayam bsb 100gr",1791],["Curry",1755]]},"2601":{"BSP":[["Salmon slice 100g",21656],["Ayam bl 150gr marinasi- 10pcs/pak",12545],["Crab claw",7176],["Beras jepang",6913],["Ayam bl blok 30gr marinasi- 40pcs/pak",5615]],"BGM":[["Salmon slice 100g",9912],["Ayam bl 150gr marinasi- 10pcs/pak",6097],["Beras jepang",3526],["Lunch box + lid hiro",3386],["Crab claw",3162]],"BGC":[["Salmon slice 100g",2633],["Ayam bl 150gr marinasi- 10pcs/pak",2110],["Lunch box + lid hiro",944],["Crab claw",799],["Beras jepang",684]],"KPM":[["Chicken mozza 60g",6871],["Ayam bsl 100gr",5882],["Beras jepang",3926],["Ayam bsb 100gr",3155],["Ayam bl blok 30gr marinasi- 40pcs/pak",2904]],"KGM":[["Ayam bsl 100gr",12648],["Chicken mozza 60g",12213],["Beras jepang",8395],["Ayam bsb 100gr",5878],["Ayam bl blok 30gr marinasi- 40pcs/pak",4420]],"KGC":[["Chicken mozza 60g",2896],["Ayam bsl 100gr",1962],["Beras jepang",1819],["Ayam bsb 100gr",1100],["Ayam bl blok 30gr marinasi- 40pcs/pak",1021]]},"2602":{"BSP":[["Salmon slice 100g",18623],["Ayam bl 150gr marinasi- 10pcs/pak",9388],["Beras jepang",6870],["Crab claw",6052],["Ayam bl blok 30gr marinasi- 40pcs/pak",4667]],"BGM":[["Salmon slice 100g",10571],["Ayam bl 150gr marinasi- 10pcs/pak",6688],["Beras jepang",4236],["Lunch box + lid hiro",3423],["Crab claw",3315]],"BGC":[["Salmon slice 100g",212],["Ayam bl 150gr marinasi- 10pcs/pak",96],["Ayam bl blok 30gr marinasi- 40pcs/pak",67],["Crab claw",55],["Beras jepang",49]],"KPM":[["Chicken mozza 60g",7597],["Ayam bsl 100gr",5899],["Beras jepang",4583],["Ayam bsb 100gr",3053],["Ayam bl blok 30gr marinasi- 40pcs/pak",2263]],"KGM":[["Chicken mozza 60g",13042],["Ayam bsl 100gr",11257],["Beras jepang",9056],["Ayam bsb 100gr",5845],["Curry",4403]],"KGC":[["Chicken mozza 60g",3376],["Ayam bsl 100gr",2387],["Beras jepang",2064],["Ayam bl blok 30gr marinasi- 40pcs/pak",1372],["Ayam bsb 100gr",1313]]},"2603":{"BSP":[["Salmon slice 100g",21915],["Ayam bl 160gr marinasi- 10pcs/pak",9218],["Crab claw",7329],["Beras jepang",6433],["Tamago yaki frozen 6pcs/pak",5758]],"BGM":[["Salmon slice 100g",14400],["Ayam bl 160gr marinasi- 10pcs/pak",5808],["Crab claw",4364],["Lunch box + lid hiro",3822],["Beras jepang",3653]],"KPM":[["Chicken mozza 60g",8950],["Ayam bsl 100gr",6719],["Beras jepang",4276],["Ayam bsb 100gr",3608],["Ayam bl blok 30gr marinasi- 40pcs/pak",2668]],"KGM":[["Chicken mozza 60g",15056],["Ayam bsl 100gr",14581],["Beras jepang",8328],["Ayam bsb 100gr",6760],["Curry",5394]],"KGC":[["Chicken mozza 60g",3535],["Ayam bsl 100gr",3191],["Beras jepang",1852],["Ayam bsb 100gr",1596],["Ayam bl blok 30gr marinasi- 40pcs/pak",1503]]},"2604":{"BSP":[["Salmon slice 100g",19335],["Ayam bl 160gr marinasi- 10pcs/pak",10213],["Beras jepang",6552],["Crab claw",6062],["Lunch box + lid hiro",5642]],"BGM":[["Salmon slice 100g",11539],["Ayam bl 160gr marinasi- 10pcs/pak",7317],["Lunch box + lid hiro",3638],["Beras jepang",3636],["Crab claw",3393]],"KPM":[["Chicken mozza 60g",7308],["Ayam bsl 100gr",6640],["Beras jepang",4824],["Ayam bsb 100gr",3129],["Ayam bl blok 30gr marinasi- 40pcs/pak",2286]],"KGM":[["Ayam bsl 100gr",14805],["Chicken mozza 60g",10880],["Beras jepang",8958],["Ayam bsb 100gr",5672],["Telur ayam horn 16pcs/kg",5051]],"KGC":[["Ayam bsl 100gr",2541],["Chicken mozza 60g",2304],["Beras jepang",1442],["Ayam bsb 100gr",1130],["Ayam bl blok 30gr marinasi- 40pcs/pak",1024]]},"2605":{"BSP":[["Salmon slice 100g",22777],["Ayam bl 160gr marinasi- 10pcs/pak",15783],["Beras jepang",7719],["Crab claw",7168],["Lunch box + lid hiro",5754]],"BGM":[["Salmon slice 100g",12206],["Ayam bl 160gr marinasi- 10pcs/pak",7330],["Crab claw",4094],["Lunch box + lid hiro",3966],["Beras jepang",3809]],"KPM":[["Chicken mozza 60g",9625],["Ayam bsl 100gr",6593],["Beras jepang",4481],["Ayam bsb 100gr",4324],["Curry",2600]],"KGM":[["Chicken mozza 60g",17485],["Ayam bsl 100gr",13727],["Beras jepang",9090],["Ayam bsb 100gr",7443],["Curry",5728]],"KGC":[["Chicken mozza 60g",3710],["Ayam bsl 100gr",2694],["Beras jepang",1851],["Ayam bsb 100gr",1481],["Ayam bl blok 30gr marinasi- 40pcs/pak",1444]]},"2606":{"BSP":[["Salmon slice 100g",19804],["Lunch box + lid hiro",13575],["Ayam bl 160gr marinasi- 10pcs/pak",9478],["Ayam bl 160g marinasi",8204],["Beras jepang",7192]],"BGM":[["Salmon slice 100g",11389],["Ayam bl 160gr marinasi- 10pcs/pak",5685],["Lunch box + lid hiro",3510],["Crab claw",3263],["Beras jepang",2884]],"KPM":[["Chicken mozza 60g",7011],["Ayam bsl 100gr",6566],["Beras jepang",3853],["Ayam bsb 100gr",3693],["Curry",2951]],"KGM":[["Ayam bsl 100gr",14612],["Chicken mozza 60g",11486],["Beras jepang",8379],["Ayam bsb 100gr",7736],["Curry",6869]],"KGC":[["Ayam bsl 100gr",2781],["Chicken mozza 60g",2677],["Ayam bsb 100gr",1541],["Beras jepang",1526],["Ayam bl blok 30gr marinasi- 40pcs/pak",1328]]},"2607":{"BSP":[["Salmon slice 100g",18046],["Ayam bl 160gr marinasi- 10pcs/pak",8347],["Crab claw",6061],["Lunch box + lid hiro",5874],["Beras jepang",5381]],"BGM":[["Salmon slice 100g",11039],["Ayam bl 160gr marinasi- 10pcs/pak",5755],["Lunch box + lid hiro",4189],["Crab claw",3378],["Beras jepang",2840]],"KPM":[["Chicken mozza 60g",7892],["Ayam bsl 100gr",5495],["Beras jepang",3916],["Curry",3226],["Ayam bsb 100gr",3198]],"KGM":[["Ayam bsl 100gr",11534],["Chicken mozza 60g",11377],["Beras jepang",7586],["Curry",6836],["Ayam bsb 100gr",5717]],"KGC":[["Chicken mozza 60g",2219],["Ayam bsl 100gr",1907],["Beras jepang",1247],["Ayam bsb 100gr",1194],["Curry",1047]],"MGM":[["Adonan beef hambagu",52751],["Saos yofu demi",11541],["Beef teriyaki stir fry",9154],["Wedges potato-1kg/pak",7910],["Telur ayam horn 16pcs/kg",7667]]},"2608":{"BSP":[["Salmon slice 100g",21405],["Ayam bl 160gr marinasi- 10pcs/pak",9941],["Lunch box + lid hiro",7142],["Crab claw",7040],["Beras jepang",6079]],"BGM":[["Salmon slice 100g",11824],["Ayam bl 160gr marinasi- 10pcs/pak",5805],["Lunch box + lid hiro",4296],["Beef crispy coated teriyaki",3937],["Crab claw",3880]],"KPM":[["Chicken mozza 60g",8696],["Ayam bsl 100gr",5618],["Beras jepang",3947],["Curry",3607],["Ayam bsb 100gr",2910]],"KGM":[["Chicken mozza 60g",13511],["Ayam bsl 100gr",11149],["Beras jepang",7516],["Curry",6889],["Ayam bsb 100gr",5383]],"KGC":[["Chicken mozza 60g",2893],["Ayam bsl 100gr",2659],["Beras jepang",1652],["Curry",1327],["Ayam bsb 100gr",1256]],"MGM":[["Adonan beef hamburg",118962],["Saos demi glace 2kg/pak",23103],["Wedges potato-2kg/pak",20989],["Beef teriyaki stir fry",18399],["Telur ayam horn 16pcs/kg",12405]]},"2609":{"BSP":[["Salmon slice 100g",19200],["Ayam bl 160gr marinasi- 10pcs/pak",12081],["Lunch box + lid hiro",7092],["Crab claw",6445],["Beras jepang",5611]],"BGM":[["Salmon slice 100g",9554],["Ayam bl 160gr marinasi- 10pcs/pak",6746],["Lunch box + lid hiro",4531],["Crab claw",3444],["Beras jepang",2867]],"KPM":[["Chicken mozza 60g",8401],["Ayam bsl 100gr",5850],["Beras jepang",3494],["Ayam bsb 100gr",3046],["Curry",2359]],"KGM":[["Chicken mozza 60g",13868],["Ayam bsl 100gr",11655],["Beras jepang",6437],["Curry",5218],["Ayam bl blok 30gr marinasi- 40pcs/pak",4715]],"KGC":[["Chicken mozza 60g",3109],["Ayam bsl 100gr",2724],["Beras jepang",1483],["Ayam bl blok 30gr marinasi- 40pcs/pak",1366],["Ayam bsb 100gr",1347]],"MGM":[["Adonan beef hamburg",93949],["Beef teriyaki stir fry",17576],["Saos demi glace 2kg/pak",16528],["Wedges potato-2kg/pak",15563],["Telur ayam horn 16pcs/kg",9552]]}};
+const NJ={"2411":{"BSP":[3316,2777,3659,600,834,5457,440],"BGM":[2097,1033,2030,554,345,2340,2],"BGC":[862,1008,785,484,236,1553,0],"KPM":[3198,5223,1154,28,3,6100,0],"KGM":[6477,8746,1845,562,333,13627,3],"KGC":[1795,2364,665,51,241,4285,0]},"2412":{"BSP":[2318,3640,3475,984,716,7508,495],"BGM":[1631,1512,2184,457,251,3178,11],"BGC":[620,1179,909,669,183,2114,0],"KPM":[3272,5588,1270,252,3,8097,0],"KGM":[7430,10486,2176,447,341,16253,31],"KGC":[2065,1784,601,103,238,3418,0]},"2501":{"BSP":[2523,3099,3706,1442,581,7155,334],"BGM":[2418,1369,2535,1663,1305,3180,16],"BGC":[529,698,700,471,148,1590,0],"KPM":[3477,5256,1142,266,47,7420,0],"KGM":[7118,9015,2043,808,354,14899,1],"KGC":[2023,2160,573,160,168,2385,0]},"2502":{"BSP":[2787,2866,2916,605,514,5681,112],"BGM":[894,884,1608,670,229,3497,4],"BGC":[359,973,568,451,96,2436,0],"KPM":[2681,4037,820,245,63,6735,15],"KGM":[6067,8431,1634,386,1318,13484,2],"KGC":[2299,2453,418,371,87,3079,0]},"2503":{"BSP":[2658,3289,3239,838,486,7840,143],"BGM":[1888,1603,3145,880,247,4853,2],"BGC":[655,888,869,383,80,840,0],"KPM":[2857,5167,1002,233,57,8300,0],"KGM":[5653,9260,1760,431,285,15742,46],"KGC":[1446,2290,528,115,68,3609,0]},"2504":{"BSP":[2389,3516,3787,1892,535,7156,23],"BGM":[2562,1552,2470,669,352,3298,9],"BGC":[511,822,714,471,94,2520,0],"KPM":[3129,5163,874,307,84,7653,0],"KGM":[7678,10358,1838,941,553,16613,7],"KGC":[1509,1929,453,84,44,3702,10]},"2505":{"BSP":[2719,3640,2733,1402,703,6876,204],"BGM":[1341,1858,2481,803,227,6284,82],"BGC":[703,741,442,427,128,1680,13],"KPM":[3699,5207,1218,280,76,7747,0],"KGM":[6895,9984,2015,1703,348,16147,9],"KGC":[1665,1763,333,118,261,3360,0]},"2506":{"BSP":[3115,3898,3592,1153,576,7591,121],"BGM":[1622,1635,2161,702,211,4231,58],"BGC":[862,684,609,371,139,1680,19],"KPM":[3611,5534,1030,575,34,6720,0],"KGM":[7587,10395,2106,443,316,16271,48],"KGC":[1721,2314,421,187,1016,3702,0]},"2507":{"BSP":[3070,3460,3005,1392,594,6067,276],"BGM":[1904,1531,1794,1014,327,4293,70],"BGC":[517,731,589,285,134,1680,0],"KPM":[3047,4718,936,42,36,6720,5],"KGM":[6582,9001,1595,459,334,14902,137],"KGC":[1047,1337,237,98,129,3027,87]},"2508":{"BSP":[509,1010,814,644,189,3360,258],"BGM":[535,605,508,124,126,2240,24],"BGC":[65,156,132,66,39,840,0],"KPM":[857,1405,182,59,11,2427,33],"KGM":[2017,3404,503,151,104,5227,104],"KGC":[676,698,145,15,48,1151,0]},"2509":{"BSP":[2748,2721,2246,1699,641,5398,732],"BGM":[811,1064,1426,383,316,3702,1],"BGC":[602,536,483,165,96,2520,3],"KPM":[2611,4324,918,84,60,6222,0],"KGM":[6335,8764,1679,569,267,13782,0],"KGC":[1686,1801,320,64,51,3142,7]},"2510":{"BSP":[10508,2785,2448,1508,618,7016,19],"BGM":[1481,1414,1431,464,299,4200,1],"BGC":[315,436,404,285,111,1680,0],"KPM":[2856,4040,827,81,91,6098,11],"KGM":[7602,8676,1564,402,295,15058,17],"KGC":[1739,2122,305,38,32,3593,0]},"2511":{"BSP":[2412,2862,2268,1267,446,4729,284],"BGM":[2802,1342,1335,658,268,4231,4],"BGC":[477,429,462,238,64,1680,0],"KPM":[2936,4425,876,1368,73,6098,0],"KGM":[7328,9522,1599,765,183,15400,218],"KGC":[1935,1780,490,103,62,3624,4]},"2512":{"BSP":[3082,3463,2640,1423,445,7124,199],"BGM":[1687,2024,1524,928,339,4169,57],"BGC":[648,575,598,512,158,2520,6],"KPM":[3289,6243,920,125,45,6596,9],"KGM":[7601,12467,2024,652,277,15804,9],"KGC":[2052,2521,352,401,64,3438,0]},"2601":{"BSP":[4734,3378,2939,1334,503,6564,157],"BGM":[1404,1521,1490,1207,261,4293,4],"BGC":[814,518,443,890,144,840,12],"KPM":[3232,5263,899,142,74,8338,39],"KGM":[5917,10431,1814,977,267,16956,22],"KGC":[1349,2056,423,76,47,2987,32]},"2602":{"BSP":[3109,2678,2090,1012,400,5133,229],"BGM":[1332,1307,1168,571,189,2987,3],"BGC":[59,28,64,0,0,0,0],"KPM":[2773,4492,904,52,44,8120,0],"KGM":[6075,8404,1452,447,154,13720,3],"KGC":[1774,1849,328,67,81,2862,0]},"2603":{"BSP":[3615,4172,2527,1551,553,7020,74],"BGM":[1529,1561,1500,541,204,3769,0],"KPM":[3203,5100,853,128,52,8059,18],"KGM":[7590,10854,1741,606,243,15976,0],"KGC":[2093,2276,407,11,271,2893,0]},"2604":{"BSP":[1978,3824,2525,1552,551,8767,278],"BGM":[1383,1379,1255,481,226,2397,4],"KPM":[2786,4637,854,81,826,7707,32],"KGM":[6838,9454,1565,536,267,13691,11],"KGC":[1284,1450,403,54,43,3837,0]},"2605":{"BSP":[2794,3480,2168,1361,555,6868,524],"BGM":[2305,1443,1520,605,259,4920,8],"KPM":[3003,5162,1025,29,66,9808,108],"KGM":[7538,10852,1758,413,261,17083,0],"KGC":[1477,1759,411,34,75,3998,0]},"2606":{"BSP":[4506,3462,2254,1047,480,8303,334],"BGM":[1564,1397,1549,712,270,3690,420],"KPM":[2875,4765,1119,51,56,7688,5],"KGM":[8210,11043,2085,513,304,14002,301],"KGC":[1350,1865,422,109,45,3007,0],"MGM":[289,0,0,0,0,0,12]},"2607":{"BSP":[2416,3664,2305,1048,452,7688,21],"BGM":[2283,1642,1464,719,225,2460,658],"KPM":[3152,4925,1022,21,43,7995,0],"KGM":[7438,9810,1680,631,214,17323,86],"KGC":[1337,1747,363,21,61,3998,0],"MGM":[6409,1811,1494,1221,218,2443,1627]},"2608":{"BSP":[2681,3472,2158,1145,428,6150,0],"BGM":[1507,1830,1189,786,207,3895,54],"KPM":[3361,5333,921,50,54,7995,0],"KGM":[8215,9991,1454,590,206,15443,21],"KGC":[1660,2056,427,1551,61,3041,0],"MGM":[12069,5352,1577,802,259,7004,493]},"2609":{"BSP":[2536,2781,2213,1097,455,6253,97],"BGM":[2105,1465,1405,426,251,2460,58],"KPM":[2632,4613,775,622,41,7073,2],"KGM":[7230,8896,1337,1852,233,16605,9],"KGC":[1620,1925,461,752,41,4066,0],"MGM":[10424,3724,1421,3742,391,6902,492]}};
+const NK={"2608":{"BSP":[["Minyak goreng",6249],["Perlengkapan kebersihan",2168],["Saos & minyak",1905],["Alat tulis kantor",954],["Bumbu & miso",929],["Perlengkapan kantong plastik",480],["Lainnya",3349]],"BGM":[["Minyak goreng",3945],["Perlengkapan kebersihan",1289],["Saos & minyak",792],["Alat tulis kantor",588],["Bumbu & miso",588],["Perlengkapan kantong plastik",401],["Lainnya",1865]],"KPM":[["Minyak goreng",7995],["Mayo & produk telur",2824],["Saos & minyak",1264],["Perlengkapan bahan kertas",1135],["Perlengkapan kebersihan",830],["Produk olahan sayur & umbi",826],["Lainnya",2839]],"KGM":[["Minyak goreng",15443],["Mayo & produk telur",5472],["Perlengkapan bahan plastik",2511],["Perlengkapan bahan kertas",2358],["Saos & minyak",2107],["Produk olahan sayur & umbi",1867],["Lainnya",6160]],"KGC":[["Minyak goreng",3041],["Alat saji f&b",1521],["Mayo & produk telur",1156],["Perlengkapan bahan plastik",551],["Perlengkapan bahan kertas",485],["Perlengkapan kebersihan",432],["Lainnya",1611]],"MGM":[["Minyak goreng",8758],["Perlengkapan bahan kertas",6033],["Saos & minyak",4902],["Perlengkapan bahan plastik",3122],["Perlengkapan kebersihan",1352],["Alat tulis kantor",911],["Lainnya",2476]]},"2609":{"BSP":[["Minyak goreng",6342],["Perlengkapan kebersihan",2162],["Saos & minyak",1516],["Alat tulis kantor",1037],["Bumbu & miso",686],["Perlengkapan kantong plastik",499],["Lainnya",3188]],"BGM":[["Minyak goreng",2502],["Perlengkapan kebersihan",1444],["Alat tulis kantor",833],["Saos & minyak",716],["Bumbu & miso",538],["Perlengkapan bahan plastik",527],["Lainnya",1610]],"KPM":[["Minyak goreng",7073],["Mayo & produk telur",2210],["Saos & minyak",1043],["Perlengkapan bahan kertas",913],["Produk olahan sayur & umbi",866],["Perlengkapan kebersihan",780],["Lainnya",2873]],"KGM":[["Minyak goreng",16605],["Mayo & produk telur",4714],["Perlengkapan bahan plastik",2497],["Produk olahan sayur & umbi",1961],["Perlengkapan bahan kertas",1820],["Saos & minyak",1721],["Lainnya",6842]],"KGC":[["Minyak goreng",4066],["Mayo & produk telur",1030],["Alat saji f&b",634],["Perlengkapan bahan plastik",542],["Perlengkapan kebersihan",454],["Perlengkapan bahan kertas",401],["Lainnya",1737]],"MGM":[["Minyak goreng",8331],["Perlengkapan bahan kertas",4398],["Saos & minyak",3735],["Perlengkapan bahan plastik",3449],["Alat saji f&b",3205],["Perlengkapan kebersihan",1207],["Lainnya",2774]]}};
+// ===== DATA END =====
+// ===== LOGIC =====
+const O=['BSP','BGM','BGC','KPM','KGM','KGC','MGM'];
+const BR=[{k:'Bentoya',c:'--bentoya',o:['BSP','BGM','BGC']},{k:'KatsuQ',c:'--katsuq',o:['KPM','KGM','KGC']},{k:'Marusan',c:'--marusan',o:['MGM']}];
+const JN=['Frying oil','Extra customer','Operasional','Hygiene & sanitasi','Product loss','Kesejahteraan karyawan','R&D'];
+const JI=[5,1,0,2,3,4,6];
+const MNS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const oi=o=>O.indexOf(o);
+const yr=m=>'20'+m.slice(0,2);
+const lab=m=>ML[m]+' '+yr(m);
+const labS=m=>ML[m]+' '+m.slice(0,2);
+const py=m=>String(+m.slice(0,2)-1).padStart(2,'0')+m.slice(2);
+const dim=m=>new Date(2000+ +m.slice(0,2),+m.slice(2),0).getDate();
+const YEARS=[...new Set(M.map(m=>m.slice(0,2)))];
+const isRun=m=>!!(RUN&&m===RUN.m);
+
+function lastReal(m,o){const r=OD[m];if(!r)return 0;let d=0;r.forEach(x=>{if(x[2+2*oi(o)])d=x[0]});return d}
+// omzet {t,r} per bulan/outlet; bulan berjalan = s.d. hari terakhir realisasi
+function omz(m,o){
+  if(OM[m]){const v=OM[m][o];return v?{t:v[0],r:v[1]}:null}
+  const rows=OD[m];if(!rows)return null;const ld=lastReal(m,o);if(!ld)return null;
+  let t=0,r=0;rows.forEach(x=>{if(x[0]<=ld){t+=x[1+2*oi(o)];r+=x[2+2*oi(o)]}});return {t,r,ld};
+}
+// realisasi tahun lalu yang sebanding (proporsional hari untuk bulan berjalan)
+function prevR(m,o){const p=omz(py(m),o);if(!p||!p.r)return 0;if(isRun(m)){const v=omz(m,o);return p.r*((v&&v.ld)||RUN.omz)/dim(m)}return p.r}
+// omzet dasar rasio pemakaian (bulan berjalan s.d. tgl data pemakaian)
+function omzBase(m,o){
+  const lim=PMK_LAST[m];if(!lim){const v=omz(m,o);return v?v.r:0}
+  let r=0;OD[m].forEach(x=>{if(x[0]<=lim)r+=x[2+2*oi(o)]});return r;
+}
+const rec=(m,o)=>(REC[m]||{})[o]||0, non=(m,o)=>(NON[m]||{})[o]||0;
+const hasRec=m=>!!REC[m]&&Object.keys(REC[m]).some(k=>O.includes(k));
+const active=(m,o)=>{const v=omz(m,o);return !!v&&v.r>0};
+const recRatio=(m,o)=>{const a=rec(m,o),b=omzBase(m,o);return a&&b?a/b*100:null};
+const nonRatio=(m,o)=>{const a=non(m,o),b=omzBase(m,o);return (NON[m]&&a&&b)?a/b*100:null};
+const jt=v=>(v/1000).toLocaleString('id-ID',{maximumFractionDigits:Math.abs(v)>=100000?0:1});
+const pct=(a,b)=>b?a/b*100:null;
+const fp=v=>v==null?'–':v.toLocaleString('id-ID',{maximumFractionDigits:1})+'%';
+const fg=v=>v==null?'–':(v>0?'+':v<0?'−':'')+Math.abs(v).toLocaleString('id-ID',{maximumFractionDigits:1})+'%';
+const gcls=v=>v==null?'flat':v>=1?'up':v<=-1?'down':'flat';
+const cls=p=>p==null?'':p>=100?'p-good':p>=85?'p-warn':'p-bad';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+let SELS=[M[M.length-1]], SEL=SELS[0], OUT='MGM', LOCS=new Set(O);
+// ===== FILTER MULTI: LOKASI & BULAN =====
+try{const f=JSON.parse(localStorage.getItem('isaLoc')||'null');if(Array.isArray(f)){const v=f.filter(o=>O.includes(o));if(v.length)LOCS=new Set(v)}}catch(e){}
+const scope=()=>O.filter(o=>LOCS.has(o));
+const inScope=o=>LOCS.has(o);
+const isAll=()=>LOCS.size===O.length;
+function scopeLbl(){if(isAll())return 'seluruh outlet';const parts=[];BR.forEach(b=>{const s=b.o.filter(inScope);if(!s.length)return;if(s.length===b.o.length&&b.o.length>1)parts.push(b.k);else parts.push(...s)});return parts.join(' + ')}
+function setSels(a){SELS=[...new Set(a)].sort();SEL=SELS[SELS.length-1]}
+// label periode terpilih (selalu dalam satu tahun)
+function plab(ms=SELS){if(ms.length===1)return lab(ms[0]);const idx=ms.map(m=>+m.slice(2));const run=idx.every((v,i)=>!i||v===idx[i-1]+1);return (run?ML[ms[0]]+'–'+ML[ms[ms.length-1]]:ms.map(m=>ML[m]).join(', '))+' '+yr(ms[0])}
+function applyFilter(){try{localStorage.setItem('isaLoc',JSON.stringify(scope()))}catch(e){}renderAll();renderCharts()}
+function buildLocPanel(){
+  const p=document.getElementById('locPanel');
+  p.innerHTML=`<label class="ck all"><input type="checkbox" data-all> Semua lokasi</label>`+BR.map(b=>`<div class="grp"><label class="ck bh"><input type="checkbox" data-b="${b.k}"><b style="background:var(${b.c})"></b>${b.k}</label><div class="ol">${b.o.map(o=>`<label class="ck"><input type="checkbox" data-o="${o}"> ${o}</label>`).join('')}</div></div>`).join('')+`<div class="hint">Pilih satu atau beberapa lokasi. Minimal satu lokasi.</div>`;
+  p.addEventListener('change',e=>{const t=e.target;const n=new Set(LOCS);
+    if(t.dataset.all!=null){if(t.checked)O.forEach(o=>n.add(o));else return renderLoc()}
+    else if(t.dataset.b){const b=BR.find(x=>x.k===t.dataset.b);b.o.forEach(o=>t.checked?n.add(o):n.delete(o))}
+    else if(t.dataset.o){t.checked?n.add(t.dataset.o):n.delete(t.dataset.o)}
+    if(!n.size)return renderLoc();LOCS=n;applyFilter()});
+  const dd=document.getElementById('locDD');
+  document.addEventListener('click',e=>{if(dd.open&&!dd.contains(e.target))dd.open=false});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')dd.open=false});
+}
+function renderLoc(){
+  document.getElementById('locSum').textContent='Lokasi: '+(isAll()?'Semua':scopeLbl());
+  const p=document.getElementById('locPanel');
+  p.querySelector('[data-all]').checked=isAll();
+  p.querySelectorAll('[data-o]').forEach(i=>i.checked=LOCS.has(i.dataset.o));
+  p.querySelectorAll('[data-b]').forEach(i=>{const b=BR.find(x=>x.k===i.dataset.b);const k=b.o.filter(inScope).length;i.checked=k===b.o.length;i.indeterminate=k>0&&k<b.o.length});
+}
+
+// yoy = total (termasuk outlet baru); lfl = hanya outlet yang juga ada tahun lalu
+function sumM(m,outs){let t=0,r=0,rc=0,nr=0,b=0,br=0,pr=0,tr=0,rl=0,pl=0;outs.forEach(o=>{const v=omz(m,o);const p=prevR(m,o);pr+=p;if(v&&v.r>0){t+=v.t;r+=v.r;if(v.t)tr+=v.r;if(p){rl+=v.r;pl+=p}const x=rec(m,o);if(x){rc+=x;br+=omzBase(m,o)}nr+=non(m,o);b+=omzBase(m,o)}});
+  return {t,r,tr,rc,nr,b,br,pr,rl,pl,ach:t?pct(tr,t):null,yoy:pr?(r/pr-1)*100:null,lfl:pl?(rl/pl-1)*100:null}}
+// gabungan beberapa bulan
+function agg(ms,outs){const a={t:0,r:0,tr:0,rc:0,nr:0,b:0,br:0,pr:0,rl:0,pl:0};ms.forEach(m=>{const s=sumM(m,outs);for(const k in a)a[k]+=s[k]});
+  a.ach=a.t?pct(a.tr,a.t):null;a.yoy=a.pr?(a.r/a.pr-1)*100:null;a.lfl=a.pl?(a.rl/a.pl-1)*100:null;return a}
+function ytd(m,outs){const y=m.slice(0,2);let r=0,pr=0,rl=0,pl=0;M.filter(x=>x.slice(0,2)===y&&x<=m).forEach(x=>{const s=sumM(x,outs);r+=s.r;pr+=s.pr;rl+=s.rl;pl+=s.pl});return {r,pr,yoy:pr?(r/pr-1)*100:null,lfl:pl?(rl/pl-1)*100:null}}
+const hasNonAll=()=>SELS.every(m=>NON[m]), hasNonAny=()=>SELS.some(m=>NON[m]);
+const activeSel=o=>SELS.some(m=>active(m,o));
+const runIn=()=>RUN&&SELS.includes(RUN.m);
+
+function renderPeriod(){
+  const y0=SEL.slice(0,2),ms=M.filter(m=>m.slice(0,2)===y0);
+  const Y=document.getElementById('years');Y.textContent='';
+  YEARS.forEach(y=>{const b=document.createElement('button');b.type='button';b.textContent='20'+y;b.setAttribute('aria-pressed',y0===y);b.onclick=()=>{setSels([M.filter(m=>m.slice(0,2)===y).pop()]);renderAll();renderCharts()};Y.appendChild(b)});
+  const w=document.getElementById('months');w.textContent='';
+  ms.forEach(m=>{const b=document.createElement('button');b.type='button';b.textContent=ML[m]+(isRun(m)?' (berjalan)':'');b.setAttribute('aria-pressed',SELS.includes(m));
+    b.title='Klik untuk menambah atau melepas bulan ini';
+    b.onclick=()=>{if(SELS.includes(m)){if(SELS.length>1)setSels(SELS.filter(x=>x!==m))}else setSels([...SELS,m]);renderAll();renderCharts()};w.appendChild(b)});
+  const all=SELS.length===ms.length;const q=document.createElement('button');q.type='button';q.className='q';
+  q.textContent=all?'Satu bulan':'Semua bulan';q.onclick=()=>{setSels(all?[ms[ms.length-1]]:ms);renderAll();renderCharts()};w.appendChild(q);
+  const tag=document.getElementById('periodTag');const n=SELS.length;
+  let t=n>1?`${n} bulan · ${plab()}`:(OM[SEL]&&!Object.values(OM[SEL]).some(v=>v[0])?lab(SEL)+' · penjualan saja':lab(SEL)+(isRun(SEL)?'':' · bulan penuh'));
+  if(runIn())t+=n>1?` · ${ML[RUN.m]}: omzet s.d. ${RUN.omz}, pemakaian s.d. ${RUN.pmk}`:` · omzet s.d. ${RUN.omz}, pemakaian s.d. ${RUN.pmk}`;
+  tag.textContent=t;
+}
+
+function renderTiles(){
+  const sc=scope(),s=agg(SELS,sc),Y=ytd(SEL,sc);
+  let worst=null;if(sc.length>1)sc.forEach(o=>{const v=agg(SELS,[o]);if(v.r>0&&v.t){const p=v.ach;if(!worst||p<worst.p)worst={o,p,gap:v.tr-v.t}}});
+  const supp=SELS.reduce((x,m)=>x+Object.entries(NON[m]||{}).filter(([k])=>!O.includes(k)).reduce((a,[,v])=>a+v,0),0);
+  const pl=plab(),ppl=plab(SELS.map(py));
+  document.getElementById('tiles').innerHTML=`
+  <div class="tile"><span class="eyebrow">Realisasi omzet ${isAll()?'':scopeLbl()+' · '}${pl}</span><span class="big num">Rp ${jt(s.r)} jt</span><span class="sub">${s.t?`Target Rp ${jt(s.t)} jt · <span class="pill ${cls(s.ach)}">${fp(s.ach)}</span>`:'Tanpa target (data penjualan 2024)'}</span></div>
+  <div class="tile"><span class="eyebrow">Vs ${ppl}</span><span class="big num ${gcls(s.yoy)}">${fg(s.yoy)}</span><span class="sub">${s.pr?(s.lfl!=null&&Math.abs(s.lfl-s.yoy)>0.05?`Outlet yang sama <span class="delta ${gcls(s.lfl)}">${fg(s.lfl)}</span> · `:'')+`Rp ${jt(s.pr)} jt${runIn()?' (bulan berjalan proporsional hari)':''} tahun lalu`:'Belum ada data tahun lalu'}</span></div>
+  <div class="tile"><span class="eyebrow">Kumulatif ${yr(SEL)} s.d. ${ML[SEL]}</span><span class="big num">Rp ${jt(Y.r)} jt</span><span class="sub">${Y.pr?`<span class="delta ${gcls(Y.yoy)}">${fg(Y.yoy)}</span> vs periode sama ${+yr(SEL)-1}${Y.lfl!=null&&Math.abs(Y.lfl-Y.yoy)>0.05?` · outlet yang sama <span class="delta ${gcls(Y.lfl)}">${fg(Y.lfl)}</span>`:''}`:'Belum ada data tahun lalu'}</span></div>
+  <div class="tile"><span class="eyebrow">Pemakaian resep</span><span class="big num">${s.rc?'Rp '+jt(s.rc)+' jt':'–'}</span><span class="sub">${s.rc?fp(pct(s.rc,s.br))+' dari omzet outlet yang ada datanya':'Tidak ada data resep untuk periode ini'}</span></div>
+  <div class="tile"><span class="eyebrow">Pemakaian non-resep</span><span class="big num">${hasNonAny()?'Rp '+jt(s.nr)+' jt':'–'}</span><span class="sub">${hasNonAny()?(hasNonAll()?fp(pct(s.nr,s.b))+' dari omzet':'Sebagian bulan tanpa data non-resep')+(isAll()?' · lokasi pendukung Rp '+jt(supp)+' jt':''):'Tidak ada data non-resep untuk periode ini'}</span></div>
+  ${worst?`<div class="tile"><span class="eyebrow">Perlu perhatian</span><span class="big num">${worst.o}</span><span class="sub">Capai <span class="pill ${cls(worst.p)}">${fp(worst.p)}</span> · kurang Rp ${jt(Math.abs(worst.gap))} jt</span></div>`:''}`;
+}
+
+function renderBrands(){
+  const W=document.getElementById('brands');W.innerHTML='';
+  BR.filter(b=>b.o.some(inScope)).forEach(b=>{
+    const bo=b.o.filter(inScope),s=agg(SELS,bo);const act=bo.filter(activeSel);
+    const el=document.createElement('div');el.className='brand';el.style.setProperty('--c',css(b.c));
+    if(!s.r){el.innerHTML=`<h3>${b.k}</h3><div class="muted" style="font-size:.88rem">Tidak ada omzet pada ${plab()}.</div>`;W.appendChild(el);return}
+    el.innerHTML=`<div class="row"><h3>${b.k}${bo.length<b.o.length?` <span class="tag">${bo.join(' ')}</span>`:''}</h3>${s.t?`<span class="pill ${cls(s.ach)}">${fp(s.ach)}</span>`:''}</div>
+      <div class="num" style="font:700 1.4rem var(--f-display)">Rp ${jt(s.r)} jt ${s.t?`<span class="muted" style="font:500 .85rem var(--f-body)">dari target Rp ${jt(s.t)} jt</span>`:''}</div>
+      ${s.t?`<div class="meter"><i style="width:${Math.min(100,s.ach||0)}%"></i></div>`:''}
+      <div class="row"><span class="muted">Vs tahun lalu</span><span class="delta ${gcls(s.pr?s.yoy:null)}">${s.pr?fg(s.yoy):'outlet baru'}</span></div>
+      <div class="row"><span class="muted">Resep / omzet</span><span class="num">${fp(s.rc?pct(s.rc,s.br):null)}</span></div>
+      <div class="row"><span class="muted">Non-resep / omzet</span><span class="num">${fp(hasNonAll()?pct(s.nr,s.b):null)}</span></div>
+      <div class="outlets">${act.map(o=>`<span>${o}</span>`).join('')}</div>`;
+    W.appendChild(el);
+  });
+}
+
+function renderTable(){
+  const t=document.getElementById('outletTbl');const na=hasNonAll(),nany=hasNonAny();
+  let h=`<thead><tr><th>Outlet</th><th>Target</th><th>Realisasi</th><th>% capai</th><th>Selisih</th><th>Vs thn lalu</th><th>Resep</th><th>% omzet</th><th>Non-resep</th><th>% omzet</th></tr></thead><tbody>`;
+  const row=(lbl,s,cl)=>`<tr${cl?` class="${cl}"`:''}><td${cl?'':' class="b"'}>${lbl}</td><td class="num">${s.t?jt(s.t):'–'}</td><td class="num">${jt(s.r)}</td><td>${s.ach==null?'–':`<span class="pill ${cls(s.ach)}">${fp(s.ach)}</span>`}</td><td class="num" style="color:var(${!s.t?'--muted':s.tr>=s.t?'--good':'--bad'})">${s.t?(s.tr>=s.t?'+':'−')+jt(Math.abs(s.tr-s.t)):'–'}</td><td class="delta ${gcls(s.pr?s.yoy:null)}">${s.pr?fg(s.yoy):'–'}</td><td class="num">${s.rc?jt(s.rc):'–'}</td><td class="num">${fp(s.rc?pct(s.rc,s.br):null)}</td><td class="num">${nany&&s.nr?jt(s.nr):'–'}</td><td class="num">${fp(na&&s.nr?pct(s.nr,s.b):null)}</td></tr>`;
+  let rows=0;const multi=scope().length>1;
+  BR.filter(b=>b.o.some(inScope)).forEach(b=>{
+    const bo=b.o.filter(inScope),s=agg(SELS,bo);if(!s.r)return;rows++;let n=0;
+    bo.forEach(o=>{const v=agg(SELS,[o]);if(!v.r)return;n++;
+      const ld=runIn()?(omz(RUN.m,o)||{}).ld:0;
+      h+=row(`${o}${ld&&ld<RUN.omz?` <span class="tag">${ML[RUN.m]} s.d. ${ld}</span>`:''}`,v)});
+    if(multi&&n>1)h+=row(`Total ${b.k}`,s,'brandrow');
+  });
+  if(multi&&rows>1)h+=row('Total pilihan',agg(SELS,scope()),'brandrow');
+  if(!rows)h+=`<tr><td colspan="10" class="muted" style="text-align:left">Tidak ada omzet untuk ${scopeLbl()} pada ${plab()}.</td></tr>`;
+  t.innerHTML=h+'</tbody>';
+}
+
+function renderHeat(){
+  const y=SEL.slice(0,2),ms=M.filter(m=>m.slice(0,2)===y);
+  const outs=O.filter(o=>inScope(o)&&ms.some(m=>active(m,o)));
+  document.getElementById('hmAchTitle').textContent='Pencapaian target per outlet · '+yr(SEL);
+  document.getElementById('hmYoYTitle').textContent='Pertumbuhan vs tahun lalu · '+yr(SEL);
+  document.getElementById('hmFcTitle').textContent='Rasio pemakaian resep per outlet · '+yr(SEL);
+  const multi=SELS.length>1;
+  const hd=last=>`<thead><tr><th>Outlet</th>${ms.map(m=>`<th style="text-align:center">${ML[m]}</th>`).join('')}${multi?'<th style="text-align:center">Terpilih</th>':''}<th style="text-align:center">${last}</th></tr></thead><tbody>`;
+  const sel=m=>SELS.includes(m)?'outline:2px solid var(--accent);outline-offset:-2px;':'';
+  let a=hd('YTD'),g=hd('YTD'),f=hd('YTD');
+  outs.forEach(o=>{
+    a+=`<tr><td class="b">${o}</td>`;g+=`<tr><td class="b">${o}</td>`;f+=`<tr><td class="b">${o}</td>`;let T=0,TR=0,R=0,PR=0,RC=0,B=0;
+    ms.forEach(m=>{const v=omz(m,o);
+      if(!v||!v.r){a+=`<td class="c na" style="${sel(m)}">–</td>`;g+=`<td class="c na" style="${sel(m)}">–</td>`;f+=`<td class="c na" style="${sel(m)}">–</td>`;return}
+      R+=v.r;const pr=prevR(m,o);PR+=pr;
+      if(v.t){T+=v.t;TR+=v.r;const p=pct(v.r,v.t);const bg=p>=100?'var(--good-bg)':p>=85?'var(--warn-bg)':'var(--bad-bg)',fc=p>=100?'var(--good)':p>=85?'var(--warn)':'var(--bad)';a+=`<td class="c" style="background:${bg};color:${fc};${sel(m)}">${Math.round(p)}%</td>`}
+      else a+=`<td class="c na" style="${sel(m)}">–</td>`;
+      if(pr){const gr=(v.r/pr-1)*100;const bg=gr>=3?'var(--good-bg)':gr<=-3?'var(--bad-bg)':'var(--soft)',fc=gr>=3?'var(--good)':gr<=-3?'var(--bad)':'var(--muted)';g+=`<td class="c" style="background:${bg};color:${fc};${sel(m)}">${fg(gr)}</td>`}
+      else g+=`<td class="c na" style="${sel(m)}">baru</td>`;
+      const rr=recRatio(m,o);if(rr!=null){RC+=rec(m,o);B+=omzBase(m,o);const al=Math.max(0,Math.min(1,(rr-15)/25));f+=`<td class="c" style="background:color-mix(in srgb,var(--accent) ${Math.round(al*70)}%,transparent);color:${al>.55?'var(--surface)':'var(--ink)'};${sel(m)}">${fp(rr)}</td>`}
+      else f+=`<td class="c na" style="${sel(m)}">–</td>`;
+    });
+    if(multi){const s=agg(SELS,[o]);
+      a+=`<td class="c">${s.ach==null?'–':`<span class="pill ${cls(s.ach)}">${Math.round(s.ach)}%</span>`}</td>`;
+      g+=`<td class="c"><span class="delta ${gcls(s.pr?s.yoy:null)}">${s.pr?fg(s.yoy):'–'}</span></td>`;
+      f+=`<td class="c b">${fp(s.rc?pct(s.rc,s.br):null)}</td>`}
+    const yp=T?pct(TR,T):null;a+=`<td class="c">${yp==null?'–':`<span class="pill ${cls(yp)}">${Math.round(yp)}%</span>`}</td></tr>`;
+    const yg=PR?(R/PR-1)*100:null;g+=`<td class="c"><span class="delta ${gcls(yg)}">${fg(yg)}</span></td></tr>`;
+    f+=`<td class="c b">${fp(B?pct(RC,B):null)}</td></tr>`;
+  });
+  document.getElementById('hmAch').innerHTML=a+'</tbody>';document.getElementById('hmYoY').innerHTML=g+'</tbody>';document.getElementById('hmFc').innerHTML=f+'</tbody>';
+}
+
+let charts={};
+function baseOpts(){const ink=css('--muted'),line=css('--line');return {responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{color:ink,boxWidth:10,font:{family:'Figtree'}}},tooltip:{callbacks:{}}},
+  scales:{x:{ticks:{color:ink},grid:{display:false}},y:{ticks:{color:ink},grid:{color:line}}}}}
+function renderYoY(){
+  const o=baseOpts();o.plugins.tooltip.callbacks.label=c=>c.raw==null?null:`${c.dataset.label}: Rp ${Math.round(c.raw).toLocaleString('id-ID')} jt`;
+  const cols=['--yr-a','--yr-b','--accent'];const ys=YEARS.slice(-3);
+  const ds=ys.map((y,i)=>{const c=css(cols[cols.length-ys.length+i]);return {label:'20'+y,data:MNS.map((_,k)=>{const m=y+String(k+1).padStart(2,'0');return M.includes(m)?(sumM(m,scope()).r/1000||null):null}),borderColor:c,backgroundColor:c,borderWidth:y===ys[ys.length-1]?3:2,pointRadius:2.5,tension:.25,spanGaps:false}});
+  if(RUN)ds[ds.length-1].label='20'+RUN.m.slice(0,2)+` (${ML[RUN.m]} s.d. ${RUN.omz})`;
+  document.getElementById('yoySub').textContent='Total realisasi '+scopeLbl()+' · Rp juta';
+  charts.y?.destroy();charts.y=new Chart(document.getElementById('cYoY'),{type:'line',data:{labels:MNS,datasets:ds},options:o});
+}
+function renderTrend(){
+  const y=SEL.slice(0,2),ms=M.filter(m=>m.slice(0,2)===y);const sc=scope();
+  document.getElementById('trendTitle').textContent='Omzet per brand vs target · '+yr(SEL);
+  const o=baseOpts();o.scales.x.stacked=true;o.scales.y.stacked=true;
+  o.plugins.tooltip.callbacks.label=c=>c.raw==null?null:`${c.dataset.label}: Rp ${Math.round(c.raw).toLocaleString('id-ID')} jt`;
+  const ds=BR.filter(b=>b.o.some(inScope)).map(b=>{const bo=b.o.filter(inScope);return {type:'bar',label:bo.length<b.o.length?b.k+' ('+bo.join(' ')+')':b.k,data:ms.map(m=>sumM(m,bo).r/1000),backgroundColor:ms.map(m=>SELS.includes(m)||SELS.length===1?css(b.c):css(b.c)+'66'),stack:'s'}});
+  ds.push({type:'line',label:'Target',data:ms.map(m=>{const t=sumM(m,sc).t;return t?t/1000:null}),borderColor:css('--ink'),borderDash:[5,4],pointRadius:3,pointBackgroundColor:css('--ink'),stack:'t'});
+  charts.t?.destroy();charts.t=new Chart(document.getElementById('cTrend'),{data:{labels:ms.map(m=>ML[m]),datasets:ds},options:o});
+}
+function renderFc(){
+  const ms=M.filter(hasRec);
+  const o=baseOpts();o.scales.y.ticks.callback=v=>v+'%';o.plugins.tooltip.callbacks.label=c=>c.raw==null?null:`${c.dataset.label}: ${fp(c.raw)}`;
+  const col={BSP:'--bentoya',BGM:'--bentoya',BGC:'--bentoya',KPM:'--katsuq',KGM:'--katsuq',KGC:'--katsuq',MGM:'--marusan'};
+  const dash={BSP:[],BGM:[6,3],BGC:[2,3],KPM:[],KGM:[6,3],KGC:[2,3],MGM:[]};
+  const ds=O.filter(x=>inScope(x)&&ms.some(m=>recRatio(m,x)!=null)).map(x=>({label:x,data:ms.map(m=>recRatio(m,x)),borderColor:css(col[x]),backgroundColor:css(col[x]),borderDash:dash[x],pointRadius:2,spanGaps:false,tension:.25}));
+  charts.f?.destroy();charts.f=new Chart(document.getElementById('cFc'),{type:'line',data:{labels:ms.map(labS),datasets:ds},options:o});
+}
+
+function renderOutletSel(){
+  const s=document.getElementById('outletSel');s.textContent='';
+  let outs=scope().filter(activeSel);if(!outs.length)outs=[scope()[0]];if(!outs.includes(OUT))OUT=outs[0];
+  outs.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;if(o===OUT)op.selected=true;s.appendChild(op)});
+  s.onchange=()=>{OUT=s.value;renderDetail()};
+}
+function hbars(el,rows,empty){const mx=Math.max(...rows.map(r=>r[1]),1);el.innerHTML=rows.map(([l,v])=>`<span class="l" title="${l}">${l}</span><span class="t"><i style="width:${v/mx*100}%"></i></span><span class="n">${jt(v)}</span>`).join('')||`<span class="muted">${empty||'Tidak ada data untuk periode ini'}</span>`}
+// gabung daftar [nama, nilai] dari beberapa bulan
+function mergeRows(lists,keep){const acc={};lists.forEach(l=>(l||[]).forEach(([n,v])=>acc[n]=(acc[n]||0)+v));let e=Object.entries(acc);const lain=acc['Lainnya']||0;e=e.filter(([n])=>n!=='Lainnya').sort((a,b)=>b[1]-a[1]);
+  if(keep==null)return e.slice(0,5);const top=e.slice(0,keep),rest=e.slice(keep).reduce((s,x)=>s+x[1],0)+lain;if(rest)top.push(['Lainnya',rest]);return top}
+function renderDetail(){
+  const o=OUT,multi=SELS.length>1;const card=document.getElementById('dailyCard');
+  if(o&&window.Chart&&(multi||OD[SEL])){
+    card.hidden=false;const i=oi(o);const bc=css(BR.find(b=>b.o.includes(o)).c);
+    const op=baseOpts();op.plugins.tooltip.callbacks.label=c=>c.raw==null?null:`${c.dataset.label}: Rp ${(+c.raw).toLocaleString('id-ID',{maximumFractionDigits:1})} jt`;
+    let labels,ds;
+    if(multi){
+      labels=SELS.map(m=>ML[m]);
+      document.getElementById('dailyTitle').textContent=`Bulanan ${o} · ${plab()}`;
+      document.getElementById('dailySub').textContent='Realisasi omzet (batang), target (garis putus), pemakaian resep (garis) per bulan terpilih · Rp juta';
+      ds=[{type:'bar',label:'Realisasi omzet',data:SELS.map(m=>{const v=omz(m,o);return v&&v.r?v.r/1000:null}),backgroundColor:bc,order:3},
+        {type:'line',label:'Target',data:SELS.map(m=>{const v=omz(m,o);return v&&v.t?v.t/1000:null}),borderColor:css('--ink'),borderDash:[5,4],pointRadius:3,order:1},
+        {type:'line',label:'Pemakaian resep',data:SELS.map(m=>rec(m,o)?rec(m,o)/1000:null),borderColor:css('--accent'),backgroundColor:css('--accent'),pointRadius:3,order:2}];
+    } else {
+      const m=SEL,rows=OD[m].filter(x=>x[0]<=31),rd=(RD[m]||{})[o];labels=rows.map(x=>x[0]);
+      document.getElementById('dailyTitle').textContent=`Harian ${o} · ${lab(m)}`;
+      document.getElementById('dailySub').textContent='Realisasi omzet (batang), target harian (garis putus)'+(rd?', pemakaian resep (garis)':'')+' · Rp juta';
+      ds=[{type:'bar',label:'Realisasi omzet',data:rows.map(x=>x[2+2*i]/1000),backgroundColor:bc,order:3},
+        {type:'line',label:'Target',data:rows.map(x=>x[1+2*i]?x[1+2*i]/1000:null),borderColor:css('--ink'),borderDash:[5,4],pointRadius:0,order:1}];
+      if(rd)ds.push({type:'line',label:'Pemakaian resep',data:rows.map(x=>rd[x[0]-1]==null?null:rd[x[0]-1]/1000),borderColor:css('--accent'),backgroundColor:css('--accent'),pointRadius:2,order:2});
+    }
+    charts.d?.destroy();charts.d=new Chart(document.getElementById('cDaily'),{data:{labels,datasets:ds},options:op});
+  } else card.hidden=true;
+  document.getElementById('topSub').textContent=multi?'Rp juta · gabungan 5 teratas tiap bulan terpilih':'Rp juta';
+  hbars(document.getElementById('topRec'),mergeRows(SELS.map(m=>(TOP[m]||{})[o])),SELS.some(m=>REC[m])?'Tidak ada data resep outlet ini':'Tidak ada data resep untuk periode ini');
+  const njs=SELS.map(m=>(NJ[m]||{})[o]).filter(Boolean);const nj=njs.length?njs[0].map((_,k)=>njs.reduce((s,a)=>s+a[k],0)):null;
+  hbars(document.getElementById('nonJ'),nj?JI.map((j,n)=>[JN[n],nj[j]]).filter(r=>r[1]>0).sort((a,b)=>b[1]-a[1]):[]);
+  const nks=SELS.filter(m=>(NK[m]||{})[o]);document.getElementById('nonKCard').hidden=!nks.length;
+  if(nks.length){hbars(document.getElementById('nonK'),mergeRows(nks.map(m=>NK[m][o]),6));
+    document.getElementById('nkSub').textContent='Rp juta · tersedia untuk 3 bulan terakhir'+(multi&&nks.length<SELS.length?' · hanya '+nks.map(m=>ML[m]).join(', '):'')}
+}
+
+function renderNotes(){
+  document.getElementById('asof').textContent=ASOF+' WIB';
+  document.getElementById('rangeLbl').textContent=lab(M[0])+' – '+lab(M[M.length-1]);
+  const rn=document.getElementById('runNote');
+  if(RUN){rn.hidden=false;rn.textContent=`${lab(RUN.m)} belum tutup buku: omzet s.d. tanggal ${RUN.omz}, pemakaian s.d. tanggal ${RUN.pmk}. Target dihitung s.d. hari terakhir yang ada realisasinya, dan rasio pemakaian memakai omzet s.d. tanggal data pemakaian.`}else rn.hidden=true;
+  const dq=document.getElementById('dq');dq.textContent='';
+  document.getElementById('dqHead').hidden=!DQ.length;
+  DQ.forEach(t=>{const li=document.createElement('li');li.textContent=t;dq.appendChild(li)});
+}
+
+function renderCharts(){if(!window.Chart)return;renderYoY();renderTrend();renderFc();renderDetail()}
+function renderAll(){renderLoc();renderNotes();renderPeriod();renderTiles();renderBrands();renderTable();renderHeat();renderOutletSel();renderDetail();if(window.Chart)renderTrend()}
+function boot(){buildLocPanel();if(window.Chart)Chart.defaults.font.family='Figtree, system-ui, sans-serif';renderAll();renderCharts()}
+boot();
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',renderCharts);
+new MutationObserver(renderCharts).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+// ===== REFRESH MANUAL =====
+// Tombol menjalankan scheduled task "Refresh Dashboard Pimpinan ISA" sekarang juga.
+// Hasilnya dipublish ulang ke halaman ini; semua tampilan yang terbuka memuat ulang otomatis.
+const REFRESH_TASK='trig_016MpPBW3Yqmn7E1wzdv1DVE';
+(async()=>{
+  const box=document.getElementById('refreshBox'),btn=document.getElementById('refreshBtn'),msg=document.getElementById('refreshMsg');
+  if(!window.claude?.use)return;
+  const u=await claude.use('user');
+  const owner=u?await u.isOwner().catch(()=>false):false;
+  if(!owner)return; // hanya pemilik dashboard yang bisa menjalankan refresh
+  const mcp=await claude.use('mcp');
+  if(!mcp)return;
+  box.hidden=false;
+  msg.textContent='Data per '+ASOF+' WIB';
+  const say=(t,err)=>{msg.textContent=t;msg.classList.toggle('err',!!err)};
+  btn.addEventListener('click',async()=>{
+    btn.disabled=true;btn.textContent='Menjalankan…';say('');
+    try{
+      await mcp.callTool('Claude Code Remote','fire_trigger',{trigger_id:REFRESH_TASK},{cache:false});
+      btn.textContent='Refresh berjalan';
+      say('Menarik data dari Drive, sekitar 5–8 menit. Halaman memuat ulang sendiri saat selesai. Syarat: komputer menyala dan Chrome terbuka.');
+      setTimeout(()=>{btn.disabled=false;btn.textContent='Refresh data'},10*60*1000);
+      return;
+    }catch(e){
+      const c=e&&e.code;
+      if(c==='server_unavailable'||c==='upstream_error'){say('Belum ada jawaban dari server. Refresh mungkin sudah berjalan; tunggu 5 menit sebelum mencoba lagi.',true);setTimeout(()=>{btn.disabled=false;btn.textContent='Refresh data'},5*60*1000);btn.textContent='Refresh data';return}
+      if(c==='needs_reauth')say('Sambungan Claude Code Remote perlu dihubungkan ulang di claude.ai Settings → Connectors.',true);
+      else if(c==='server_not_connected'||c==='selection_required')say('Konektor Claude Code Remote belum tersedia. Tambahkan di claude.ai Settings → Connectors.',true);
+      else if(c==='not_in_manifest'||c==='consent_required')say('Izin menjalankan refresh belum diberikan untuk halaman ini. Klik lagi dan pilih izinkan.',true);
+      else if(c==='blocked_by_policy'||c==='approval_required')say('Kebijakan organisasi tidak mengizinkan halaman ini menjalankan refresh.',true);
+      else if(c==='tool_error')say('Refresh tidak bisa dijalankan: '+(e.message||'scheduled task menolak permintaan')+'.',true);
+      else say('Refresh tidak bisa dijalankan dari tampilan ini. Minta Claude untuk update dashboard.',true);
+      btn.disabled=false;btn.textContent='Refresh data';
+    }
+  });
+})();
+</script>
+
+
+</body></html>
